@@ -79,6 +79,7 @@ class CvTradeRoutesAdvisor:
 		self.DELETE_GROUP_ID = 13
 		#R&R mod, vetiarvind, trade groups - END
 		
+		self.SWITCH_ID = 14
 		
 	def interfaceScreen (self):
 		screen = self.getScreen()
@@ -200,9 +201,9 @@ class CvTradeRoutesAdvisor:
 		#R&R mod, vetiarvind, trade groups - end
 		
 		self.BUTTON_SIZE = 24
-		self.BUTTON_X = self.PANEL_WIDTH - self.STANDARD_MARGIN - self.BUTTON_SIZE * 3 - 4
+		self.BUTTON_X = self.PANEL_WIDTH - self.STANDARD_MARGIN - self.BUTTON_SIZE * 4 - 4
 		self.BUTTON_Y = self.STANDARD_MARGIN / 4
-		self.BUTTON_WIDTH = self.BUTTON_SIZE * 3 + 8
+		self.BUTTON_WIDTH = self.BUTTON_SIZE * 4 + 8
 		self.BUTTON_HEIGHT = self.BUTTON_SIZE + 2
 		
 		# Set the background and exit button, and show the screen
@@ -696,7 +697,24 @@ class CvTradeRoutesAdvisor:
 				self.iExportPreview = self.NO_CITY
 		
 		self.routesTable(false)
-				
+		
+	def switchCities(self):
+		if self.iImport == self.NO_CITY and self.iExport == self.NO_CITY:
+			pass
+		elif self.iImport == self.NO_CITY:
+			self.iImport = self.iExport
+			self.iExport = self.NO_CITY
+			self.iExportPreview = self.NO_CITY
+		elif self.iExport == self.NO_CITY:
+			self.iExport = self.iImport
+			self.iImport = self.NO_CITY
+			self.iImportPreview = self.NO_CITY
+		else:
+			temp = self.iImport
+			self.iImport = self.iExport
+			self.iExport = temp
+		
+		self.routesTable(false)
 		
 	def updatePreview(self):
 		# Update preview pictures
@@ -761,6 +779,7 @@ class CvTradeRoutesAdvisor:
 		# Updates button panel
 		screen = self.getScreen()
 		
+		szSwitchButton = "Art/Interface/Screens/TradeRoutes/Switch2.dds"
 		szSelectButton = "Art/Interface/Screens/TradeRoutes/Select.dds"
 		if self.bSelected:
 			szSelectButton = "Art/Interface/Screens/TradeRoutes/Deselect.dds"
@@ -773,6 +792,7 @@ class CvTradeRoutesAdvisor:
 		
 		screen.clearMultiList(self.szButtonPanel)
 		
+		screen.appendMultiListButton(self.szButtonPanel, szSwitchButton, 0, WidgetTypes.WIDGET_GENERAL, self.SWITCH_ID, -1, False)
 		if self.CURRENT_TABLE in [self.EXISTING_ROUTES, self.LIMITED_ROUTES]:
 			screen.appendMultiListButton(self.szButtonPanel, szSelectButton, 0, WidgetTypes.WIDGET_GENERAL, self.SELECT_ID, -1, False)
 		elif self.CURRENT_TABLE == self.BUILDER_TABLE:
@@ -836,6 +856,8 @@ class CvTradeRoutesAdvisor:
 					self.addSelection()
 				elif inputClass.getData1() == self.RETURN_ID:
 					self.routesTable(false)
+				elif inputClass.getData1() == self.SWITCH_ID:
+					self.switchCities()
 			#R&R mod, vetiarvind, trade groups - START
 			elif inputClass.getFunctionName() == self.TableNames[self.LOAD_GROUP_TABLE]:							
 				self.loadSelectedGroup(inputClass.getMouseY())									
@@ -910,6 +932,8 @@ class CvTradeRoutesAdvisor:
 				return localText.getText("TXT_KEY_TRADE_ROUTES_CLEAR_SELECTION_HELP", ())
 			elif iData1 == self.CLEAR_IMPORT_ID:
 				return localText.getText("TXT_KEY_TRADE_ROUTES_CLEAR_SELECTION_HELP", ())
+			elif iData1 == self.SWITCH_ID:
+				return localText.getText("TXT_KEY_TRADE_ROUTES_SWITCH_HELP", ())
 			elif iData1 == self.SELECT_ID:
 				if self.bSelected:
 					return localText.getText("TXT_KEY_TRADE_ROUTES_DESELECT_ROUTES_HELP", ())

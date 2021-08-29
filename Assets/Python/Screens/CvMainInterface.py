@@ -1932,12 +1932,23 @@ class CvMainInterface:
 					# transport feeder - start - Nightinggale
 					iAutoThreshold = pHeadSelectedCity.getAutoMaintainThreshold(iYield)
 					iThreshold     = pHeadSelectedCity.getMaintainLevel(iYield)
+					iFeederThreshold = pHeadSelectedCity.getFeederThreshold(iYield)
+					iExportThreshold = pHeadSelectedCity.getAutoExportThreshold(iYield)
+					bModifiersPlottedImports = False
 					szThreshold = ""
 					if (iAutoThreshold > 0):
-						szThreshold += " ("
-						if (iThreshold < iAutoThreshold):
-							szThreshold += unicode(iAutoThreshold) + "/"
-						szThreshold += unicode(iThreshold) + ")"
+						bModifiersPlottedImports = True
+						if (iThreshold >= iAutoThreshold):
+							szThreshold += " [" + unicode(iThreshold) + "-"
+						else:
+							szThreshold += " [" + unicode(iAutoThreshold) + "(" + unicode(iThreshold) + ")-"
+						
+					szImport = ""
+					if (iFeederThreshold > 0):
+						szImport += " @" + unicode(iFeederThreshold) + "-"
+					szExport = ""
+					if (iExportThreshold > 0):
+						szExport += " @" + unicode(iExportThreshold) + "+"
 					# transport feeder - end - Nightinggale
 				
 					if (pHeadSelectedCity.isExport(iYield)):
@@ -1946,7 +1957,16 @@ class CvMainInterface:
 						# transport feeder - start - Nightinggale
 						#if pHeadSelectedCity.getMaintainLevel(iYield) > 0:
 						#	szExportText += " (%s %d)" % (localText.getText("TXT_KEY_TRADE_ROUTE_MAINTAIN", ()), pHeadSelectedCity.getMaintainLevel(iYield))
+						if (pHeadSelectedCity.getAutoExportThreshold(iYield) > 0):
+							if (pHeadSelectedCity.isAutoExportStopped(iYield)):
+								szExportText = localText.getText("TXT_KEY_COLOR_NEGATIVE", ()) + szExportText
+							else:
+								szExportText = localText.getText("TXT_KEY_COLOR_POSITIVE", ()) + szExportText
 						szExportText += szThreshold
+						if (bModifiersPlottedImports):
+							szExportText += "]"
+						szExportText += szExport
+						szExportText += localText.getText("TXT_KEY_COLOR_REVERT", ())
 						# transport feeder - end - Nightinggale
 						screen.setTableText("ExportTradeRouteText", 0, iExportRow, u"<font=3>%s</font>" % szExportText, "", WidgetTypes.WIDGET_YIELD_IMPORT_EXPORT, false, -1, CvUtil.FONT_LEFT_JUSTIFY )
 
@@ -1954,8 +1974,16 @@ class CvMainInterface:
 						iImportRow = screen.appendTableRow("ImportTradeRouteText")
 						szImportText = u"<font=3>%c %s</font>" % (gc.getYieldInfo(iYield).getChar(), gc.getYieldInfo(iYield).getDescription())
 						# R&R mod, vetiarvind, max yield import limit - start
+						szImportText += szThreshold
 						if pHeadSelectedCity.getImportsLimit(iYield) > 0:
-							szImportText += " (%s %d)" % (localText.getText("TXT_KEY_TRADE_ROUTE_LIMIT", ()), pHeadSelectedCity.getImportsLimit(iYield))
+							if (iAutoThreshold == 0):
+								szImportText += u" ["
+							#szImportText += " (%s %d)" % (localText.getText("TXT_KEY_TRADE_ROUTE_LIMIT", ()), pHeadSelectedCity.getImportsLimit(iYield))
+							bModifiersPlottedImports = False
+							szImportText += u"%d]" % (pHeadSelectedCity.getImportsLimit(iYield))
+						elif (iAutoThreshold > 0):
+							bModifiersPlottedImports = False
+							szImportText += u"]"
 						# R&R mod, vetiarvind, max yield import limit - end
 						# transport feeder - start - Nightinggale
 						# turn text green or red for feeder serviced yields
@@ -1964,8 +1992,9 @@ class CvMainInterface:
 								szImportText = localText.getText("TXT_KEY_COLOR_NEGATIVE", ()) + szImportText
 							else:
 								szImportText = localText.getText("TXT_KEY_COLOR_POSITIVE", ()) + szImportText
-							szImportText += szThreshold
+							szImportText += szImport
 							szImportText += localText.getText("TXT_KEY_COLOR_REVERT", ())
+								
 						# transport feeder - end - Nightinggale
 						screen.setTableText("ImportTradeRouteText", 0, iImportRow, szImportText, "", WidgetTypes.WIDGET_YIELD_IMPORT_EXPORT, true, -1, CvUtil.FONT_LEFT_JUSTIFY )
 				
