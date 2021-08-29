@@ -57,6 +57,14 @@
         <Italian>Esportazione automatica di tutte le merci</Italian>
         <Spanish>Exportación automática de todas las mercancías</Spanish>
     </TEXT>
+	<TEXT>
+        <Tag>TXT_KEY_POPUP_IMPORT_AUTO_FEEDER_ALL</Tag>
+        <English>Auto-setup feeder on all goods</English>
+    </TEXT>
+	<TEXT>
+        <Tag>TXT_KEY_POPUP_IMPORT_AUTO_DOMESTIC_ALL</Tag>
+        <English>Auto-setup needed domestic goods</English>
+    </TEXT>
     <TEXT>
         <Tag>TXT_KEY_POPUP_IMPORT_IMPORT</Tag>
         <English>Import</English>
@@ -300,8 +308,12 @@
         <Spanish>Activate all shown trade routes</Spanish>
     </TEXT>
     <TEXT>
+        <Tag>TXT_KEY_TRADE_ROUTES_SWITCH_HELP</Tag>
+        <English>Switch import city to export city and vice versa</English>
+    </TEXT>
+    <TEXT>
         <Tag>TXT_KEY_TRADE_ROUTES_DESELECT_ROUTES_HELP</Tag>
-        <English>Deactivate all currently assigned transport routes for this unit</English>
+        <English>Deactivate transport routes of this list for this unit</English>
         <French>Désactiver toutes les routes commerciales</French>
         <German>Alle derzeit zugewiesenen Transportrouten für diese Einheit deaktivieren</German>
     </TEXT>

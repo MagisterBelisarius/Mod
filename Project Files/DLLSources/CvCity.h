@@ -855,7 +855,10 @@ protected:
 public:
  	bool getImportsMaintain(YieldTypes eYield) const;
 	bool isAutoImportStopped(YieldTypes eYield) const;
+	bool isAutoExportStopped(YieldTypes eYield) const; // auto export stop - Belisarius
 	int getAutoMaintainThreshold(YieldTypes eYield) const;
+	int getFeederThreshold(YieldTypes eYield) const; // custom feeder threshold - Belisarius
+	int getAutoExportThreshold(YieldTypes eYield) const; // custom auto export threshold - Belisarius
 	int getProductionNeededUncached(YieldTypes eYield) const;
 	void checkImportsMaintain(YieldTypes eYield, bool bUpdateScreen = false);
 
@@ -875,13 +878,19 @@ protected:
 	EnumMap<YieldTypes, unsigned short> m_em_iTradeThreshold;
 
 	// saves the hysteresis state
-	EnumMap<YieldTypes,bool> m_em_bTradeStopAutoImport;
+	EnumMap<YieldTypes,bool> m_em_bTradeStopAutoImport; // flag determining if feeder import is stopped (vs active)
+	EnumMap<YieldTypes,bool> m_em_bTradeStopAutoExport; // flag determining if thresholded export is stopped (vs active) / auto export stop - Belisarius
 	EnumMap<YieldTypes,int> m_em_iTradeAutoThreshold; // nosave - recalculate on load
 	EnumMap<YieldTypes,int> m_em_iProductionNeeded; // nosave - recalculate on load
+	EnumMap<YieldTypes,int> m_em_iTradeFeederThreshold; // custom feeder threshold - Belisarius
+	EnumMap<YieldTypes,int> m_em_iTradeAutoExportThreshold; // custom auto export threshold - Belisarius
 
 	// setImportsMaintain() is only allowed to be called by doTask() or it will cause desyncs
 	void setImportsMaintain(YieldTypes eYield, bool bSetting);
 	// transport feeder - end - Nightinggale
+	
+	void setFeederThreshold(YieldTypes eYield, int iValue); // custom feeder threshold - Belisarius
+	void setAutoExportThreshold(YieldTypes eYield, int iValue); // custom auto export threshold - Belisarius
 	
 	// auto traderoute - start - Nightinggale
 public:
@@ -889,8 +898,8 @@ public:
 protected:
 	void setAutoExport(YieldTypes eYield, bool bExport);
 	void doAutoExport(YieldTypes eYield);
-	void handleAutoTraderouteSetup(bool bReset, bool bImportAll, bool bAutoExportAll);
-	
+	void handleAutoTraderouteSetup(bool bReset, bool bImportAll, bool bAutoExportAll, bool bAutoFeederAll, bool bAutoDomesticAll);
+
 	// auto traderoute - end - Nightinggale
 
 public:
@@ -949,6 +958,12 @@ inline bool CvCity::getImportsMaintain(YieldTypes eYield) const
 inline bool CvCity::isAutoImportStopped(YieldTypes eYield) const
 {
 	return m_em_bTradeStopAutoImport.get(eYield);
+}
+
+// auto export stop - Belisarius
+inline bool CvCity::isAutoExportStopped(YieldTypes eYield) const
+{
+	return m_em_bTradeStopAutoExport.get(eYield);
 }
 
 inline int CvCity::getAutoMaintainThreshold(YieldTypes eYield) const

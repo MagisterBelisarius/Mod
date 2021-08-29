@@ -972,6 +972,7 @@ enum TaskTypes
 	TASK_YIELD_TRADEROUTE, // transport feeder - Nightinggale
 	TASK_AUTO_TRADEROUTE, // auto traderoute - Nightinggale
 	TASK_CHOOSE_CITY_PLOT_YIELD,
+	TASK_YIELD_TRADEROUTE2, // custom auto export threshold - Belisarius
 
 #ifdef _USRDLL
 	NUM_TASK_TYPES

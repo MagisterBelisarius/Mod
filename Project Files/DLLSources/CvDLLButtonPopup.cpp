@@ -863,6 +863,8 @@ void CvDLLButtonPopup::OnOkClicked(CvPopup* pPopup, PopupReturn *pPopupReturn, C
 						const bool bAutoExport      = (pPopupReturn->getCheckboxBitfield(eExportYield) & 0x02);
 						const int iImportLimitLevel =  pPopupReturn->getSpinnerWidgetValue(eYield);
 						const int iMaintainLevel    =  pPopupReturn->getSpinnerWidgetValue(eExportYield);
+						const int iFeederThreshold  =  pPopupReturn->getSpinnerWidgetValue(NUM_YIELD_TYPES*2 + eYield);
+						const int iAutoExportThreshold  =  pPopupReturn->getSpinnerWidgetValue(NUM_YIELD_TYPES*3 + eYield);
 
 						// check if any data is different from the same data in the city
 						if (bImport != pCity->isImport(eYield)
@@ -871,6 +873,7 @@ void CvDLLButtonPopup::OnOkClicked(CvPopup* pPopup, PopupReturn *pPopupReturn, C
 							|| bAutoExport != pCity->isAutoExport(eYield) // auto traderoute - Nightinggale
 							|| iMaintainLevel != pCity->getMaintainLevel(eYield)
 							|| iImportLimitLevel != pCity->getImportsLimit(eYield) // R&R mod, vetiarvind, max yield import limit
+							|| iFeederThreshold != pCity->getFeederThreshold(eYield) // custom feeder threshold - Belisarius
 							)
 						{
 							// a difference is detected. Send one network package containing everything.
@@ -880,9 +883,22 @@ void CvDLLButtonPopup::OnOkClicked(CvPopup* pPopup, PopupReturn *pPopupReturn, C
 							NetworkDataTradeRouteInts buffer;
 							buffer.iImportLimitLevel = iImportLimitLevel;
 							buffer.iMaintainLevel    = iMaintainLevel;
+							
+							NetworkDataTradeRouteInts2 buffer2;
+							buffer2.eYield           = eYield;
+							buffer2.iFeederThreshold = iFeederThreshold;
 
-							gDLL->sendDoTask(info.getData1(), TASK_YIELD_TRADEROUTE, eYield, buffer.iNetwork, bImport, bExport, bMaintainImport, bAutoExport);
+							gDLL->sendDoTask(info.getData1(), TASK_YIELD_TRADEROUTE, buffer2.iNetwork2, buffer.iNetwork, bImport, bExport, bMaintainImport, bAutoExport);
 						}
+						
+						if (iAutoExportThreshold != pCity->getAutoExportThreshold(eYield)) // custom auto export threshold - Belisarius
+						{
+							NetworkDataTradeRouteInts3 buffer3;
+							buffer3.eYield               = eYield;
+							buffer3.iAutoExportThreshold = iAutoExportThreshold;
+							gDLL->sendDoTask(info.getData1(), TASK_YIELD_TRADEROUTE2, buffer3.iNetwork3, 0, false, false, false, false);
+						}
+						
 						// R&R mod, vetiarvind, max yield import limit - end
 						// transport feeder - end - Nightinggale
 					}
@@ -892,10 +908,17 @@ void CvDLLButtonPopup::OnOkClicked(CvPopup* pPopup, PopupReturn *pPopupReturn, C
 			// auto traderoute - start - Nightinggale
 			if (pPopupReturn->getButtonClicked() >= 0)
 			{
-				bool bReset          = pPopupReturn->getButtonClicked() == 0;
-				bool bImportAll      = pPopupReturn->getButtonClicked() == 1;
-				bool bAutoExportAll  = pPopupReturn->getButtonClicked() == 2;
-				gDLL->sendDoTask(info.getData1(), TASK_AUTO_TRADEROUTE, 0, 0, bReset, bImportAll, bAutoExportAll, false);
+				bool bReset           = pPopupReturn->getButtonClicked() == 0;
+				bool bImportAll       = pPopupReturn->getButtonClicked() == 1;
+				bool bAutoExportAll   = pPopupReturn->getButtonClicked() == 2;
+				bool bAutoFeederAll   = pPopupReturn->getButtonClicked() == 3;
+				bool bAutoDomesticAll = pPopupReturn->getButtonClicked() == 4;
+				
+				NetworkDataTradeRouteInts4 buffer4;
+				buffer4.bAutoDomesticAll = bAutoDomesticAll;
+				
+				gDLL->sendDoTask(info.getData1(), TASK_AUTO_TRADEROUTE, 0, buffer4.iNetwork4, bReset, bImportAll, bAutoExportAll, bAutoFeederAll);
+
 			}
 			// auto traderoute - end - Nightinggale
 		}
@@ -3101,6 +3124,11 @@ bool CvDLLButtonPopup::launchYieldImportExportPopup(CvPopup* pPopup, CvPopupInfo
 	gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_POPUP_IMPORT_CLEAR_ALL").c_str(), NULL, 0);
 	gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_POPUP_IMPORT_ALL").c_str(), NULL, 1);
 	gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_POPUP_IMPORT_EXPORT_ALL").c_str(), NULL, 2);
+	// auto feeder test - Belisarius - start
+	gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_POPUP_IMPORT_AUTO_FEEDER_ALL").c_str(), NULL, 3);
+	// auto domestic market
+	gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_POPUP_IMPORT_AUTO_DOMESTIC_ALL").c_str(), NULL, 4);
+	// auto feeder test - Belisarius - end
 	// auto traderoute - end - Nightinggale
 
 
@@ -3122,7 +3150,6 @@ bool CvDLLButtonPopup::launchYieldImportExportPopup(CvPopup* pPopup, CvPopupInfo
 
 			// import
 			gDLL->getInterfaceIFace()->popupStartHLayout(pPopup, 0);
-
 			gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, L"", kYield.getButton(), -1, WIDGET_HELP_YIELD, eYield);
 			gDLL->getInterfaceIFace()->popupCreateSpinBox(pPopup, eYield, L"", pCity->getImportsLimit(eYield), 10, 0xFFFF, 0);
 			gDLL->getInterfaceIFace()->popupCreateCheckBoxes(pPopup, 2, eYield, WIDGET_GENERAL, POPUP_LAYOUT_TOP);
@@ -3136,7 +3163,6 @@ bool CvDLLButtonPopup::launchYieldImportExportPopup(CvPopup* pPopup, CvPopupInfo
 			YieldTypes eExportYield = eYield + NUM_YIELD_TYPES;
 
 			gDLL->getInterfaceIFace()->popupStartHLayout(pPopup, 0);
-
 			gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, L"", kYield.getButton(), -1, WIDGET_HELP_YIELD, eYield);
 			gDLL->getInterfaceIFace()->popupCreateSpinBox(pPopup, eExportYield, L"", pCity->getMaintainLevel(eYield), 10, 0xFFFF, 0);
 			gDLL->getInterfaceIFace()->popupCreateCheckBoxes(pPopup, 2, eExportYield, WIDGET_GENERAL, POPUP_LAYOUT_TOP);
@@ -3146,6 +3172,16 @@ bool CvDLLButtonPopup::launchYieldImportExportPopup(CvPopup* pPopup, CvPopupInfo
 			gDLL->getInterfaceIFace()->popupSetCheckBoxText(pPopup, 1, L"<font=1>" + gDLL->getText("TXT_KEY_POPUP_IMPORT_AUTO_EXPORT") + L"</font>", eExportYield, gDLL->getText("TXT_KEY_POPUP_IMPORT_AUTO_EXPORT_HELP").getWithoutFormatting());
 			gDLL->getInterfaceIFace()->popupEndLayout(pPopup);
 			// R&R mod, vetiarvind, max yield import limit - end
+			
+			// custom auto feeder & export threshold - Belisarius
+			gDLL->getInterfaceIFace()->popupStartHLayout(pPopup, 0);
+			gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, L"", kYield.getButton(), -1, WIDGET_HELP_YIELD, eYield);
+			gDLL->getInterfaceIFace()->popupCreateSpinBox(pPopup, NUM_YIELD_TYPES*2+eYield, L"", pCity->getFeederThreshold(eYield), 10, 0xFFFF, 0);
+			gDLL->getInterfaceIFace()->popupCreateSpinBox(pPopup, NUM_YIELD_TYPES*3+eYield, L"", pCity->getAutoExportThreshold(eYield), 10, 0xFFFF, 0);
+			gDLL->getInterfaceIFace()->popupEndLayout(pPopup);
+			
+			gDLL->getInterfaceIFace()->popupStartHLayout(pPopup, 0);
+			gDLL->getInterfaceIFace()->popupEndLayout(pPopup);
 		}
 	}
 

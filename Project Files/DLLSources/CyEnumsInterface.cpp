@@ -705,6 +705,7 @@ void CyEnumsPythonInterface()
 		.value("TASK_YIELD_EXPORT", TASK_YIELD_EXPORT)
 		.value("TASK_YIELD_LEVEL", TASK_YIELD_LEVEL)
 		.value("TASK_YIELD_TRADEROUTE", TASK_YIELD_TRADEROUTE) // transport feeder - Nightinggale
+		.value("TASK_YIELD_TRADEROUTE2", TASK_YIELD_TRADEROUTE2) // custom auto export threshold - Belisarius
 		.value("TASK_CLEAR_SPECIALTY", TASK_CLEAR_SPECIALTY)
 		.value("TASK_EDUCATE", TASK_EDUCATE)
 		.value("TASK_PUSH_TRAIN_UNIT", TASK_PUSH_TRAIN_UNIT)

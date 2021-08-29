@@ -1404,6 +1404,17 @@ int CyCity::getImportsLimit(int /*YieldTypes*/ eYield) const
 }
 // R&R mod, vetiarvind, max yield import limit - end
 // transport feeder - start - Nightinggale
+
+int CyCity::getFeederThreshold(int /*YieldTypes*/ eYield) const
+{
+	return m_pCity ? m_pCity->getFeederThreshold((YieldTypes) eYield) : -1;
+}
+
+int CyCity::getAutoExportThreshold(int /*YieldTypes*/ eYield) const
+{
+	return m_pCity ? m_pCity->getAutoExportThreshold((YieldTypes) eYield) : -1;
+}
+
 bool CyCity::isImportFeeder(int /*YieldTypes*/ eYield) const
 {
 	return m_pCity ? m_pCity->getImportsMaintain((YieldTypes) eYield) : false;
@@ -1412,6 +1423,12 @@ bool CyCity::isImportFeeder(int /*YieldTypes*/ eYield) const
 bool CyCity::isAutoImportStopped(int /*YieldTypes*/ eYield) const
 {
 	return m_pCity ? m_pCity->isAutoImportStopped((YieldTypes) eYield) : false;
+}
+
+// auto export stop - Belisarius
+bool CyCity::isAutoExportStopped(int /*YieldTypes*/ eYield) const
+{
+	return m_pCity ? m_pCity->isAutoExportStopped((YieldTypes) eYield) : false;
 }
 
 int CyCity::getAutoMaintainThreshold(int /*YieldTypes*/ eYield) const

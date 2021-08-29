@@ -87,7 +87,10 @@ void CyCityPythonInterface5(python::class_<CyCity>& x)
 		// transport feeder - start - Nightinggale
 		.def("isImportFeeder", &CyCity::isImportFeeder, "bool isImportFeeder(int /*YieldTypes*/ eYield) const")
 		.def("isAutoImportStopped", &CyCity::isAutoImportStopped, "bool isAutoImportStopped(int /*YieldTypes*/ eYield) const")
+		.def("isAutoExportStopped", &CyCity::isAutoExportStopped, "bool isAutoExportStopped(int /*YieldTypes*/ eYield) const") // auto export stop - Belisarius
 		.def("getAutoMaintainThreshold", &CyCity::getAutoMaintainThreshold, "int getAutoMaintainThreshold(int /*YieldTypes*/ eYield) const")
+		.def("getFeederThreshold", &CyCity::getFeederThreshold, "int getFeederThreshold(int /*YieldTypes*/ eYield)")
+		.def("getAutoExportThreshold", &CyCity::getAutoExportThreshold, "int getAutoExportThreshold(int /*YieldTypes*/ eYield)") // custom auto export threshold - Belisarius
 		// transport feeder - end - Nightinggale
 
 		.def("isOrderWaitingForYield", &CyCity::isOrderWaitingForYield, "python::tuple isOrderWaitingForYield(int /*YieldTypes*/ eYield)")

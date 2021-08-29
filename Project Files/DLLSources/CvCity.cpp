@@ -332,6 +332,8 @@ void CvCity::uninit()
 	// transport feeder - start - Nightinggale
 	m_em_bTradeImportsMaintain.reset();
 	// transport feeder - end - Nightinggale
+	m_em_iTradeFeederThreshold.reset(); // custom feeder threshold - Belisarius
+	m_em_iTradeAutoExportThreshold.reset();// custom auto export threshold - Belisarius
 }
 
 // FUNCTION: reset()
@@ -828,54 +830,75 @@ void CvCity::doTask(TaskTypes eTask, int iData1, int iData2, bool bOption, bool 
 
 	// transport feeder - start - Nightinggale
 	case TASK_YIELD_TRADEROUTE:
-		setAutoExport((YieldTypes)iData1, bCtrl); // auto traderoute - Nightinggale
+	{
+		// custom feeder threshold additional data packing - Belisarius
+		NetworkDataTradeRouteInts2 buffer2(iData1);
+		YieldTypes eYield = buffer2.eYield;
+		setFeederThreshold(eYield, buffer2.iFeederThreshold);
+		// custom feeder threshold additional data packing end
+
+		setAutoExport(eYield, bCtrl); // auto traderoute - Nightinggale
 
 		// change all traderoute settings for a single yield in one go as setImportsMaintain() needs to be called after updating the other settings
 		if (bOption || bShift)
 		{
 			// enable import when requested by import or feeder service checkboxes (just one of them is enough)
-			addImport((YieldTypes) iData1);
+			addImport(eYield);
 		}
 		else
 		{
-			removeImport((YieldTypes) iData1);
+			removeImport(eYield);
 		}
 
 		if (bAlt)
 		{
-			addExport((YieldTypes) iData1);
+			addExport(eYield);
 		}
 		else
 		{
-			removeExport((YieldTypes) iData1);
+			removeExport(eYield);
 		}
 
 		// R&R mod, vetiarvind, max yield import limit - start | implement Nightinggale's bit twiddling optimization
 		{
 			// see CvDLLButtonPopup::OnOkClicked() for details on how those ints are stored
 			NetworkDataTradeRouteInts buffer(iData2);
-			setImportsLimit ((YieldTypes) iData1, buffer.iImportLimitLevel);
-			setMaintainLevel((YieldTypes) iData1, buffer.iMaintainLevel);
+			setImportsLimit (eYield, buffer.iImportLimitLevel);
+			setMaintainLevel(eYield, buffer.iMaintainLevel);
 		}
 		// R&R mod, vetiarvind, max yield import limit - end
 
 		
-		setImportsMaintain((YieldTypes) iData1, bShift);
+		setImportsMaintain(eYield, bShift);
 		if (!bOption)
 		{
 			// just in case import and import feeder are both turned off at the same time
-			removeImport((YieldTypes) iData1);
+			removeImport(eYield);
 		}
-		doAutoExport((YieldTypes) iData1); // auto traderoute - Nightinggale
+		doAutoExport(eYield); // auto traderoute - Nightinggale
 		break;
+	}
 	// transport feeder - end - Nightinggale
-
+	
+	// custom auto export threshold - Belisarius
+	case TASK_YIELD_TRADEROUTE2:
+	{
+		NetworkDataTradeRouteInts3 buffer3(iData1);
+		YieldTypes eYield = buffer3.eYield;
+		setAutoExportThreshold(eYield, buffer3.iAutoExportThreshold);
+		doAutoExport(eYield); // auto traderoute - Nightinggale
+		break;
+	}
+	
 	// auto traderoute - start - Nightinggale
 	case TASK_AUTO_TRADEROUTE:
-		handleAutoTraderouteSetup(bOption, bAlt, bShift);
+	{
+		NetworkDataTradeRouteInts4 buffer4(iData2);
+		handleAutoTraderouteSetup(bOption, bAlt, bShift, bCtrl, buffer4.bAutoDomesticAll);
 		break;
+	}
 	// auto traderoute - end - Nightinggale
-
+	
 	case TASK_CLEAR_SPECIALTY:
 		{
 			CvUnit* pUnit = GET_PLAYER(getOwnerINLINE()).getUnit(iData1);
@@ -10747,7 +10770,7 @@ void CvCity::removeTradeRoutes()
 	// replaced vanilla code as it only took care of import and export
 	// this call will call the same button as the "clear all" button
 	// this clears feeder service and auto export too
-	handleAutoTraderouteSetup(true, false, false);
+	handleAutoTraderouteSetup(true, false, false, false, false);
 }
 
 void CvCity::setMaintainLevel(YieldTypes eYield, int iMaintainLevel)
@@ -10791,6 +10814,54 @@ int CvCity::getMaintainLevel(YieldTypes eYield) const
 	// traderoute just-in-time - end - Nightinggale
 }
 
+// custom feeder threshold - Belisarius - Start
+int CvCity::getFeederThreshold(YieldTypes eYield) const
+{
+	return m_em_iTradeFeederThreshold.get(eYield);
+}
+
+void CvCity::setFeederThreshold(YieldTypes eYield, int iValue)
+{
+	if (getFeederThreshold(eYield) != iValue)
+	{		
+		m_em_iTradeFeederThreshold.set(eYield, iValue);		
+		checkImportsMaintain(eYield);
+		if (getOwnerINLINE() == GC.getGameINLINE().getActivePlayer())
+		{
+			gDLL->getInterfaceIFace()->setDirty(SelectionButtons_DIRTY_BIT, true);
+		}
+	}
+}
+
+// custom auto export threshold - Belisarius
+int CvCity::getAutoExportThreshold(YieldTypes eYield) const
+{
+	return m_em_iTradeAutoExportThreshold.get(eYield);
+}
+
+void CvCity::setAutoExportThreshold(YieldTypes eYield, int iValue)
+{
+	if (getAutoExportThreshold(eYield) != iValue)
+	{		
+		m_em_iTradeAutoExportThreshold.set(eYield, iValue);
+		if (iValue == 0){
+			// special case: disable the export stoppage functionality
+			m_em_bTradeStopAutoExport.set(eYield, false);
+		} else {
+			// default to export being off, will automatically turn on if threshold met
+			m_em_bTradeStopAutoExport.set(eYield, true);
+		}
+		checkImportsMaintain(eYield, true);
+		doAutoExport(eYield);
+		if (getOwnerINLINE() == GC.getGameINLINE().getActivePlayer())
+		{
+			gDLL->getInterfaceIFace()->setDirty(SelectionButtons_DIRTY_BIT, true);
+		}
+	}
+}
+
+// custom feeder threshold - Belisarius - end
+
 // R&R mod, vetiarvind, max yield import limit - Start
 void CvCity::setImportsLimit(YieldTypes eYield, int iValue)
 {
@@ -10820,16 +10891,28 @@ int CvCity::getMaxImportAmount(YieldTypes eYield) const
 	//FAssert(isImport(eYield));
 
 	const int iImportLimit = m_em_iTradeMaxThreshold.get(eYield);
-
+	const int iRemainingCapacity = getMaxYieldCapacity() - getTotalYieldStored();
+	
+	// Feeder additional logic for smart limits
+	if (getImportsMaintain(eYield)){
+		int iNeededLevel   = getProductionNeeded(eYield);
+		
+		// special situation with feeder and zero keep minimum storage level -> set max equal to need if possible
+		if (getMaintainLevel(eYield)==0)
+			return std::min(iRemainingCapacity, iNeededLevel);
+		// override import limit if a need demands so
+		if (iNeededLevel > iRemainingCapacity)
+			return std::min(iRemainingCapacity, iNeededLevel);
+	}
+	
 	if (iImportLimit == 0)
 	{
 		// The city has not set a limit for this yield, return the amount of remaining storage
-		return  getMaxYieldCapacity() - getTotalYieldStored();
+		return iRemainingCapacity;
 	}
 	else
 	{
 		// The city has set an import limit, return the max amount it can accept
-		const int iRemainingCapacity = getMaxYieldCapacity() - getTotalYieldStored();
 		return std::min(iRemainingCapacity, iImportLimit);
 	}
 }
@@ -10862,27 +10945,80 @@ void CvCity::setImportsMaintain(YieldTypes eYield, bool bSetting)
 void CvCity::checkImportsMaintain(YieldTypes eYield, bool bUpdateScreen)
 {
 	FAssert(validEnumRange(eYield));
-
-	if (!m_em_bTradeImportsMaintain.get(eYield))
-	{
-		FAssert(!isAutoImportStopped(eYield));
-		return;
-	}
 	
-	FAssertMsg(isImport(eYield), "Feeder service is active without import enabled");
-
-	int iMaintainLevel = getAutoMaintainThreshold(eYield);
+	int iMaintainLevel = getAutoMaintainThreshold(eYield);// max(needs, min storage keep value)
+	int iFeederThreshold = getFeederThreshold(eYield); // custom feeder threshold - Belisarius
 	int iStoredLevel   = getYieldStored(eYield);
 	int iNeededLevel   = getProductionNeeded(eYield);
+	int iAutoExportThreshold = getAutoExportThreshold(eYield);
+	bool bScreenUpdate = bUpdateScreen; // screen update if needed from any one reason
 
-	if (!isAutoImportStopped(eYield) && iStoredLevel >= iMaintainLevel)
-	{
-		m_em_bTradeStopAutoImport.set(eYield, true);
-	} else if (isAutoImportStopped(eYield) && (iNeededLevel > iStoredLevel || (iStoredLevel <= (iMaintainLevel*3)/4))) {
-		m_em_bTradeStopAutoImport.set(eYield, false);
-	} else if (!bUpdateScreen) {
-		// nothing changed. Do not continue to screen update code.
-		return;
+	// No production active detected, override the auto value
+	if (iNeededLevel >= MAX_INT){
+		iNeededLevel = 0;
+	}
+	
+	if (m_em_bTradeImportsMaintain.get(eYield) && iMaintainLevel==0 && iFeederThreshold==0){
+		char ss[80];
+		sprintf(ss,"Feeder is not stopped while maintain is zero, yield %d",(int) eYield);
+		FAssertMsg(isAutoImportStopped(eYield), ss)
+	}
+
+	// auto import updates done if the feeder service is turned on
+	if (m_em_bTradeImportsMaintain.get(eYield)){
+		FAssertMsg(isImport(eYield), "Feeder service is active without import enabled");
+
+		int iEffectiveThreshold;
+		if (iFeederThreshold==0){
+			// default to the 75% feeder if manual threshold is set to 0
+			iEffectiveThreshold = (iMaintainLevel*3)/4;
+		}else{
+			iEffectiveThreshold = iFeederThreshold;
+		}
+
+		// import switch off condition
+		if (!isAutoImportStopped(eYield) && iStoredLevel >= std::max(iEffectiveThreshold, iMaintainLevel)){
+			if (iStoredLevel==0){
+				char ss[120];
+				sprintf(ss,"Feeder service turned off at zero storage, yield %d, Nd: %d, Mt: %d" ,(int) eYield, iNeededLevel, iMaintainLevel);
+				FAssertMsg(false, ss);
+			}
+			m_em_bTradeStopAutoImport.set(eYield, true);
+			bScreenUpdate = true;
+		} // import switch on condition
+		else if (isAutoImportStopped(eYield) && ((iStoredLevel < iNeededLevel) || (iStoredLevel < iEffectiveThreshold))) {
+			if (iStoredLevel==0){
+				char ss[120];
+				sprintf(ss,"Feeder service turned on at zero storage, yield %d, Nd: %d, Mt: %d" ,(int) eYield, iNeededLevel, iMaintainLevel);
+				FAssertMsg(false, ss);
+			}
+			m_em_bTradeStopAutoImport.set(eYield, false);
+			bScreenUpdate = true;
+		}
+	} else{
+		FAssertMsg(!isAutoImportStopped(eYield), "Feeder service is off, yet auto import is stopped");
+	}
+
+	// Export stopping functionality only activated if the threshold is defined
+	if (iAutoExportThreshold > 0){
+		// export switch off condition
+		if (!isAutoExportStopped(eYield) && (iStoredLevel <= iMaintainLevel)) {
+			m_em_bTradeStopAutoExport.set(eYield, true);
+			bScreenUpdate = true;
+		} // export switch on condition
+		else if (isAutoExportStopped(eYield) && iStoredLevel >= std::max(iAutoExportThreshold, iMaintainLevel)){
+			m_em_bTradeStopAutoExport.set(eYield, false);
+			bScreenUpdate = true;
+		}
+	} else
+		FAssertMsg(!isAutoExportStopped(eYield), "The export threshold is to zero, yet export stop function is on");
+	
+	//if (!bScreenUpdate)
+	//	return;
+	if (m_em_bTradeImportsMaintain.get(eYield) && iMaintainLevel==0 && iFeederThreshold==0){
+		char ss[80];
+		sprintf(ss,"Feeder zero state ON, yield %d Srt: %d Nd: %d",(int) eYield, iStoredLevel, iNeededLevel);
+		FAssertMsg(isAutoImportStopped(eYield), ss)
 	}
 
 	if (getOwnerINLINE() == GC.getGameINLINE().getActivePlayer())
@@ -10957,7 +11093,7 @@ void CvCity::setAutoThresholdCache()
 	{
 		YieldTypes eYield = (YieldTypes)i;
 		setAutoThresholdCache(eYield);
-		checkImportsMaintain(eYield);
+		//checkImportsMaintain(eYield); // why done twice?? Belisarius
 	}
 }
 // transport feeder - end - Nightinggale
@@ -10968,7 +11104,7 @@ void CvCity::setAutoExport(YieldTypes eYield, bool bExport)
 	m_em_bTradeAutoExport.set(eYield, bExport);
 }
 
-void CvCity::handleAutoTraderouteSetup(bool bReset, bool bImportAll, bool bAutoExportAll)
+void CvCity::handleAutoTraderouteSetup(bool bReset, bool bImportAll, bool bAutoExportAll, bool bAutoFeederAll, bool bAutoDomesticAll)
 {
 	if (bReset)
 	{
@@ -10982,7 +11118,8 @@ void CvCity::handleAutoTraderouteSetup(bool bReset, bool bImportAll, bool bAutoE
 				// this is because this function runs in parallel on all computers in the network
 				// as a result, generating network traffic would be a mistake, which could cause bugs and lag
 				// this is why the network communication is skipped in this case, something which would normally be a bug
-				doTask(TASK_YIELD_TRADEROUTE, iYield, 0, false, false, false, false);
+				doTask(TASK_YIELD_TRADEROUTE, iYield & 0xFFFF, 0, false, false, false, false);
+				doTask(TASK_YIELD_TRADEROUTE2, iYield & 0xFFFF, 0, false, false, false, false);
 			}
 		}
 		return;
@@ -11001,11 +11138,137 @@ void CvCity::handleAutoTraderouteSetup(bool bReset, bool bImportAll, bool bAutoE
 				bool bAutoExport     = bAutoExportAll || isAutoExport(eYield);
 				int iMaintainLevel   = getMaintainLevel(eYield);
 				int iImportLimitLevel= getImportsLimit(eYield);
-		
-				int iBuffer = iMaintainLevel & 0xFFFF; // lowest 16 bits
-				iBuffer |= (iImportLimitLevel & 0xFFFF) << 16; // next 16 bits
+				int iFeederThreshold = getFeederThreshold(eYield);
+				
+				NetworkDataTradeRouteInts buffer;
+				buffer.iImportLimitLevel = iImportLimitLevel;
+				buffer.iMaintainLevel    = iMaintainLevel;
+				
+				NetworkDataTradeRouteInts2 buffer2;
+				buffer2.eYield           = eYield;
+				buffer2.iFeederThreshold = iFeederThreshold;
 
-				doTask(TASK_YIELD_TRADEROUTE, iYield, iBuffer, bImport, bExport, bMaintainImport, bAutoExport);
+				doTask(TASK_YIELD_TRADEROUTE, buffer2.iNetwork2, buffer.iNetwork, bImport, bExport, bMaintainImport, bAutoExport);
+				
+				// custom auto export threshold - Belisarius
+				int iAutoExportThreshold = getAutoExportThreshold(eYield);
+				NetworkDataTradeRouteInts3 buffer3;
+				buffer3.eYield               = eYield;
+				buffer3.iAutoExportThreshold = iAutoExportThreshold;
+				
+				doTask(TASK_YIELD_TRADEROUTE2, buffer3.iNetwork3, 0, false, false, false, false);
+			}
+		}
+		return;
+	}
+	// auto feeder - Belisarius
+	if (bAutoFeederAll)
+	{
+		for (int iYield = 0; iYield < NUM_YIELD_TYPES; ++iYield)
+		{
+			YieldTypes eYield = (YieldTypes) iYield;
+			if (GC.getYieldInfo(eYield).isFeederYield())
+			{
+				bool bImport =  true;
+				bool bExport = true;
+				bool bMaintainImport = true;
+				bool bAutoExport     = isAutoExport(eYield);
+				int iMaintainLevel   = GC.getYieldInfo(eYield).minimumStorage();
+				int iImportLimitLevel= GC.getYieldInfo(eYield).maximumStorage();
+				int iFeederThreshold = GC.getYieldInfo(eYield).feederThreshold();
+				
+				NetworkDataTradeRouteInts buffer;
+				buffer.iImportLimitLevel = iImportLimitLevel;
+				buffer.iMaintainLevel    = iMaintainLevel;
+				
+				NetworkDataTradeRouteInts2 buffer2;
+				buffer2.eYield           = eYield;
+				buffer2.iFeederThreshold = iFeederThreshold;
+
+				doTask(TASK_YIELD_TRADEROUTE, buffer2.iNetwork2, buffer.iNetwork, bImport, bExport, bMaintainImport, bAutoExport);
+				
+				int iAutoExportThreshold = GC.getYieldInfo(eYield).autoExportThreshold();
+				NetworkDataTradeRouteInts3 buffer3;
+				buffer3.eYield               = eYield;
+				buffer3.iAutoExportThreshold = iAutoExportThreshold;
+				
+				doTask(TASK_YIELD_TRADEROUTE2, buffer3.iNetwork3, 0, false, false, false, false);
+			}
+		}
+	}
+	
+	// auto domestic imports - Belisarius
+	if (bAutoDomesticAll){
+		// parameters for setting up the values based on demand
+		const int iTurnsToStore = 15;
+		const int iMinTurnsToKeep = 5;
+		const int iExportThreshold = 50;
+		
+		// extracting the domestic needs 
+		YieldCargoArray<int> aYields;
+		getYieldDemands(aYields);
+		
+		// extracting production status
+		int aiYields[NUM_YIELD_TYPES];
+		int aiYieldsProduced[NUM_YIELD_TYPES];
+		calculateNetYields(aiYields, aiYieldsProduced);
+		
+		int iDomesticDemand;
+		int iLocalProduction;
+		bool bLocallyProduced;
+		
+		for (int iYield = 0; iYield < NUM_YIELD_TYPES; ++iYield)
+		{
+			YieldTypes eYield = (YieldTypes) iYield;
+			if (GC.getYieldInfo(eYield).isCargo()){
+				iDomesticDemand  = aYields.get(eYield);
+				if (iDomesticDemand <= 0)
+					continue;
+				
+				iLocalProduction = aiYieldsProduced[eYield];
+				bLocallyProduced = iLocalProduction > 0;
+				
+				// locally produced domestic goods are not imported but exported instead
+				bool bImport         = !bLocallyProduced;
+				bool bExport         = bLocallyProduced;
+				bool bMaintainImport = !bLocallyProduced;
+				bool bAutoExport     = false;
+				
+				int iMaintainLevel;
+				int iImportLimitLevel;
+				int iFeederThreshold;
+				int iAutoExportThreshold;
+
+				if (!bLocallyProduced){
+					iMaintainLevel       = iDomesticDemand * iMinTurnsToKeep;
+					iImportLimitLevel    = iDomesticDemand * iTurnsToStore;
+					iFeederThreshold     = iMaintainLevel;
+					iAutoExportThreshold = 0;
+				}else{
+					iMaintainLevel       = iDomesticDemand/10*10+10;
+					iImportLimitLevel    = 0;
+					iFeederThreshold     = 0;
+					iAutoExportThreshold = iExportThreshold + iMaintainLevel;
+				}
+				
+				NetworkDataTradeRouteInts buffer;
+				buffer.iImportLimitLevel = iImportLimitLevel;
+				buffer.iMaintainLevel    = iMaintainLevel;
+				
+				NetworkDataTradeRouteInts2 buffer2;
+				buffer2.eYield           = eYield;
+				buffer2.iFeederThreshold = iFeederThreshold;
+
+				doTask(TASK_YIELD_TRADEROUTE, buffer2.iNetwork2, buffer.iNetwork, bImport, bExport, bMaintainImport, bAutoExport);
+				
+				// export task only if producing locally
+				if (bLocallyProduced){
+					NetworkDataTradeRouteInts3 buffer3;
+					buffer3.eYield               = eYield;
+					buffer3.iAutoExportThreshold = iAutoExportThreshold;
+					
+					doTask(TASK_YIELD_TRADEROUTE2, buffer3.iNetwork3, 0, false, false, false, false);
+				}
 			}
 		}
 	}
@@ -11015,15 +11278,22 @@ void CvCity::doAutoExport(YieldTypes eYield)
 {
 	if (isAutoExport(eYield))
 	{
-		int iMaintainLevel = getMaintainLevel(eYield);
+		int iMaintainLevel = getAutoMaintainThreshold(eYield); // need or min limit
+		int iAutoExportThreshold = getAutoExportThreshold(eYield);
 		int iStored = getYieldStored(eYield);
-		if (iStored > iMaintainLevel)
-		{
-			addExport(eYield);
-		}
-		else
-		{
-			removeExport(eYield);
+		
+		// auto export threshold set: follow the flag
+		if (iAutoExportThreshold > 0){
+			if (isAutoExportStopped(eYield))
+				removeExport(eYield);
+			else
+				addExport(eYield);
+		// otherwise: check cached maintain level 
+		}else{			
+			if (iStored > iMaintainLevel)
+				addExport(eYield);
+			else
+				removeExport(eYield);
 		}
 	}
 }

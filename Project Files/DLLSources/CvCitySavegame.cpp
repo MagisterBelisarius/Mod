@@ -119,6 +119,7 @@ enum SavegameVariableTypes
 	CitySave_tradeImportsMaintain,
 	CitySave_tradeStopAutoImport,
 	CitySave_tradeMaxThreshold,
+	CitySave_tradeFeederThreshold, // custom feeder threshold - Belisarius
 
 	CitySave_MissionaryPlayer,
 	CitySave_TradePostPlayer, // WTP, ray, Native Trade Posts - START
@@ -171,6 +172,9 @@ enum SavegameVariableTypes
 	CitySave_CityTimerFestivitiesOrUnrest, // WTP, ray, Happiness - START
 
 	CitySave_tradeAutoExports,
+	
+	CitySave_tradeAutoExportThreshold, // custom auto export threshold - Belisarius
+	CitySave_tradeStopAutoExport,  // auto export stop - Belisarius
 
 	NUM_CITYSAVE_ENUM_VALUES,
 };
@@ -240,7 +244,10 @@ const char* getSavedEnumNameCity(SavegameVariableTypes eType)
 		case CitySave_tradeThreshold: return "CitySave_tradeThreshold";
 		case CitySave_tradeImportsMaintain: return "CitySave_tradeImportsMaintain";
 		case CitySave_tradeStopAutoImport: return "CitySave_tradeStopAutoImport";
+		case CitySave_tradeStopAutoExport: return "CitySave_tradeStopAutoExport";
 		case CitySave_tradeMaxThreshold: return "CitySave_tradeMaxThreshold";
+		case CitySave_tradeFeederThreshold: return "CitySave_tradeFeederThreshold"; // custom feeder threshold - Belisarius
+		case CitySave_tradeAutoExportThreshold: return "CitySave_tradeAutoExportThreshold"; // custom feeder threshold - Belisarius
 
 		case CitySave_MissionaryPlayer: return "CitySave_MissionaryPlayer";
 		case CitySave_TradePostPlayer: return "CitySave_TradePostPlayer"; // WTP, ray, Native Trade Posts - START
@@ -360,8 +367,11 @@ void CvCity::resetSavedData(int iID, PlayerTypes eOwner, int iX, int iY, bool bC
  	m_em_bTradeImportsMaintain.reset();
 	m_em_bTradeAutoExport.reset();
 	m_em_bTradeStopAutoImport.reset();
+	m_em_bTradeStopAutoExport.reset();
 	m_em_iTradeMaxThreshold.reset();
-
+	m_em_iTradeFeederThreshold.reset(); // custom feeder threshold - Belisarius
+	m_em_iTradeAutoExportThreshold.reset(); // custom auto export threshold - Belisarius
+	
 	m_eMissionaryPlayer = defaultMissionaryPlayer;
 	m_eTradePostPlayer = defaultTradePostPlayer; // WTP, ray, Native Trade Posts - START
 	m_ePreferredYieldAtCityPlot = defaultPreferredYieldAtCityPlot;
@@ -494,7 +504,10 @@ void CvCity::read(CvSavegameReader reader)
 		case CitySave_tradeThreshold: reader.Read(m_em_iTradeThreshold); break;
 		case CitySave_tradeImportsMaintain: reader.Read(m_em_bTradeImportsMaintain); break;
 		case CitySave_tradeStopAutoImport: reader.Read(m_em_bTradeStopAutoImport); break;
+		case CitySave_tradeStopAutoExport: reader.Read(m_em_bTradeStopAutoExport); break; // auto export stop - Belisarius
 		case CitySave_tradeMaxThreshold: reader.Read(m_em_iTradeMaxThreshold); break;
+		case CitySave_tradeFeederThreshold: reader.Read(m_em_iTradeFeederThreshold); break; // custom feeder threshold - Belisarius
+		case CitySave_tradeAutoExportThreshold: reader.Read(m_em_iTradeAutoExportThreshold); break; // custom auto export threshold - Belisarius
 
 		case CitySave_MissionaryPlayer: reader.Read(m_eMissionaryPlayer); break;
 		case CitySave_TradePostPlayer: reader.Read(m_eTradePostPlayer); break; // WTP, ray, Native Trade Posts - START
@@ -636,8 +649,11 @@ void CvCity::write(CvSavegameWriter writer)
 	writer.Write(CitySave_tradeThreshold, m_em_iTradeThreshold);
  	writer.Write(CitySave_tradeImportsMaintain, m_em_bTradeImportsMaintain);
 	writer.Write(CitySave_tradeStopAutoImport, m_em_bTradeStopAutoImport);
+	writer.Write(CitySave_tradeStopAutoExport, m_em_bTradeStopAutoExport); // auto export stop - Belisarius
 	writer.Write(CitySave_tradeMaxThreshold, m_em_iTradeMaxThreshold);
-
+	writer.Write(CitySave_tradeFeederThreshold, m_em_iTradeFeederThreshold); // custom feeder threshold - Belisarius
+	writer.Write(CitySave_tradeAutoExportThreshold, m_em_iTradeAutoExportThreshold); // custom auto export threshold - Belisarius
+	
 	writer.Write(CitySave_MissionaryPlayer, m_eMissionaryPlayer, defaultMissionaryPlayer);
 	writer.Write(CitySave_TradePostPlayer, m_eTradePostPlayer, defaultTradePostPlayer); // WTP, ray, Native Trade Posts - START
 	writer.Write(CitySave_PreferredYieldAtCityPlot, m_ePreferredYieldAtCityPlot, defaultPreferredYieldAtCityPlot);

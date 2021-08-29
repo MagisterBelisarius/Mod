@@ -945,9 +945,16 @@ bool CvSelectionGroupAI::AI_tradeRoutes()
 
 			// transport feeder - start - Nightinggale
 			CvCity* pDestinationCity = ::getCity(pRoute->getDestinationCity());
+			CvCity* pSourceCity = ::getCity(pRoute->getSourceCity());
 			if (pDestinationCity != NULL && pDestinationCity->isAutoImportStopped(pRoute->getYield()))
 			{
 				// ignore trade routes where destination is using feeder service and is full
+				continue;
+			}
+			// auto export stop - Belisarius
+			if (pSourceCity != NULL && pSourceCity->isAutoExportStopped(pRoute->getYield()))
+			{
+				// ignore trade routes where source has not met the set export threshold
 				continue;
 			}
 			// transport feeder - end - Nightinggale
@@ -965,12 +972,10 @@ bool CvSelectionGroupAI::AI_tradeRoutes()
 			if (bCoastalTransport && (pRoute->getDestinationCity().eOwner != getOwnerINLINE() || (pRoute->getDestinationCity() == kEurope)))
 				continue;
 
-			CvCity* pSourceCity = ::getCity(pRoute->getSourceCity());
 			CvArea* pSourceWaterArea = pSourceCity->waterArea();
 			// R&R, vetiarvind, max trade capacity  - start
 			DomainTypes domainType = getDomainType();
 			// R&R, vetiarvind, max trade capacity  - end
-
 			
 			if ((pSourceCity != NULL) && ((domainType != DOMAIN_SEA) || (pSourceWaterArea != NULL)))
 			{
@@ -993,8 +998,18 @@ bool CvSelectionGroupAI::AI_tradeRoutes()
 		{
 			CvTradeRoute* pRoute = kOwner.getTradeRoute(*it);
 			CvCity* pSourceCity = ::getCity(pRoute->getSourceCity());
+			CvCity* pDestinationCity = ::getCity(pRoute->getDestinationCity());
 			if (pSourceCity != NULL)
 			{
+				/* Do not process a route:
+				1) if feeder service is on and import is stopped
+				2) if export threshold is set and exporting is stopped
+				Stop condition was previously only adhered to by fully automated units
+				*/
+				if ((pDestinationCity != NULL && pDestinationCity->isAutoImportStopped(pRoute->getYield())) ||
+					(pSourceCity->isAutoExportStopped(pRoute->getYield())))
+					continue;
+				
 				const DomainTypes domainType = getDomainType();
 
 				CvArea* pSourceWaterArea = pSourceCity->waterArea();

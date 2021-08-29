@@ -38,6 +38,72 @@ struct NetworkDataTradeRouteInts
 	};
 };
 
+struct NetworkDataTradeRouteInts2
+{
+	NetworkDataTradeRouteInts2(int a = 0) : iNetwork2(a) {}
+
+	union
+	{
+		int iNetwork2;
+		YieldTypes eYield : 16;
+		struct
+		{
+			short iYieldPlaceHolder; // access this variable via eYield instead
+			unsigned short iFeederThreshold;
+		};
+	};
+};
+
+struct NetworkDataTradeRouteInts3
+{
+	NetworkDataTradeRouteInts3(int a = 0) : iNetwork3(a) {}
+
+	union
+	{
+		int iNetwork3;
+		YieldTypes eYield : 16;
+		struct
+		{
+			short iYieldPlaceHolder; // access this variable via eYield instead
+			unsigned short iAutoExportThreshold;
+		};
+	};
+};
+
+struct NetworkDataTradeRouteInts4
+{
+	NetworkDataTradeRouteInts4(int a = 0) : iNetwork4(a) {}
+
+	union
+	{
+		int iNetwork4;
+		struct
+		{
+			bool bAutoDomesticAll : 1;
+			bool bBit2 : 1; // space for more
+			bool bBit3 : 1;
+			bool bBit4 : 1;
+			bool bBit5 : 1;
+			bool bBit6 : 1;
+			bool bBit7 : 1;
+			bool bBit8 : 1;
+			bool bBit9 : 1;
+			bool bBit10 : 1;
+			bool bBit11 : 1;
+			bool bBit12 : 1;
+			bool bBit13 : 1;
+			bool bBit14 : 1;
+			bool bBit15 : 1;
+			bool bBit16 : 1;
+			
+			unsigned short dummy; // space for more
+		};
+	};
+};
+
 BOOST_STATIC_ASSERT(sizeof(NetworkDataTradeRouteInts) == sizeof(int));
+BOOST_STATIC_ASSERT(sizeof(NetworkDataTradeRouteInts2) == sizeof(int));
+BOOST_STATIC_ASSERT(sizeof(NetworkDataTradeRouteInts3) == sizeof(int));
+BOOST_STATIC_ASSERT(sizeof(NetworkDataTradeRouteInts4) == sizeof(int));
 
 #endif // !NETWORK_DATA_PACKING_H

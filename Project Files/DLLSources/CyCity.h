@@ -320,7 +320,10 @@ public:
 	// transport feeder - start - Nightinggale
 	bool isImportFeeder(int /*YieldTypes*/ eYield) const;
 	bool isAutoImportStopped(int /*YieldTypes*/ eYield) const;
+	bool isAutoExportStopped(int /*YieldTypes*/ eYield) const;  // auto export stop - Belisarius
 	int getAutoMaintainThreshold(int /*YieldTypes*/ eYield) const;
+	int getFeederThreshold(int /*YieldTypes*/ eYield) const; 
+	int getAutoExportThreshold(int /*YieldTypes*/ eYield) const; // custom auto export threshold - Belisarius
 	// transport feeder - end - Nightinggale
 
 	python::tuple isOrderWaitingForYield(int /*YieldTypes*/ eYield);

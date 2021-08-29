@@ -9394,6 +9394,11 @@ m_iPowerValue(0),
 m_iAssetValue(0),
 m_bCargo(false),
 m_bIsExportYield(false), // auto traderoute - Nightinggale
+m_bIsFeederYield(false), // auto domestic feeder - Belisarius
+m_iMinimumStorage(0), // auto domestic feeder - Belisarius
+m_iMaximumStorage(0), // auto domestic feeder - Belisarius
+m_iFeederThreshold(0), // auto domestic feeder - Belisarius
+m_iAutoExportThreshold(0), // custom auto export threshold - Belisarius
 // R&R, Androrc,  Livestock Breeding
 m_bLivestock(false)
 // R&R, Androrc,  Livestock Breeding, END
@@ -9654,6 +9659,15 @@ bool CvYieldInfo::read(CvXMLLoadUtility* pXML)
 	pXML->GetChildXmlValByName(&m_bCargo, "bCargo");
 
 	pXML->GetChildXmlValByName(&m_bIsExportYield, "bIsExportYield"); // auto traderoute - Nightinggale
+	
+	// auto domestic feeder - Belisarius
+	pXML->GetChildXmlValByName(&m_bIsFeederYield, "bIsFeederYield"); 
+	pXML->GetChildXmlValByName(&m_iMinimumStorage, "iMinimumStorage");
+	pXML->GetChildXmlValByName(&m_iMaximumStorage, "iMaximumStorage");
+	pXML->GetChildXmlValByName(&m_iFeederThreshold, "iFeederThreshold");
+	pXML->GetChildXmlValByName(&m_iAutoExportThreshold, "iAutoExportThreshold");
+	// auto domestic feeder - Belisarius - end
+	
 	// R&R, Androrc, Livestock Breeding
 	pXML->GetChildXmlValByName(&m_bLivestock, "bLivestock", false);
 	// R&R, Androrc, Livestock Breeding, END

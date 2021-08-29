@@ -2688,7 +2688,15 @@ public:
 	bool isCargo() const;
 
 	bool isExportYield() const {return m_bIsExportYield;} // auto traderoute - Nightinggale
-
+	
+	// auto feeder - Belisarius
+	bool isFeederYield() const {return m_bIsFeederYield;};
+	int minimumStorage() const {return m_iMinimumStorage;};
+	int maximumStorage() const {return m_iMaximumStorage;};
+	int feederThreshold() const {return m_iFeederThreshold;};
+	int autoExportThreshold() const {return m_iAutoExportThreshold;};
+	// auto feeder - Belisarius
+	
 	// R&R, Androrc, Livestock Breeding
 	bool isLivestock() const;
 	// R&R, Androrc, Livestock Breeding, END
@@ -2745,6 +2753,14 @@ protected:
 
 	bool m_bCargo;
 	bool m_bIsExportYield; // auto traderoute - Nightinggale
+	
+	// auto feeder - Belisarius
+	bool m_bIsFeederYield;
+	int m_iMinimumStorage;
+	int m_iMaximumStorage;
+	int m_iFeederThreshold;
+	int m_iAutoExportThreshold;
+	// auto feeder - Belisarius - end
 
 	// R&R, Androrc, Livestock Breeding
 	bool m_bLivestock;
