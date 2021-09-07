@@ -124,11 +124,12 @@ class CvDomesticAdvisor:
 		self.GAME_FONT_STATE = -1
 		
 		self.GENERAL_STATE            = self.addButton("GeneralState",           "INTERFACE_CITY_MAP_BUTTON")
-		self.PRODUCTION_STATE         = self.addButton("ProductionState",        "INTERFACE_NET_YIELD_BUTTON"        , ProductionAdvisor.ProductionAdvisor(self))
-		self.WAREHOUSE_STATE          = self.addButton("WareHouseState",         "INTERFACE_STORES_BUTTON"           , WarehouseAdvisor.WarehouseAdvisor(self))
 		self.BUILDING_STATE           = self.addButton("BuildingState",          "INTERFACE_CITY_BUILD_BUTTON"       , BuildingAdvisor.BuildingAdvisor(self))
-		self.IMPORTEXPORT_STATE       = self.addButton("ImportExportState",      "INTERFACE_CITY_GOVENOR_BUTTON"     , ImportExportAdvisor.ImportExportAdvisor(self))
 		self.CITIZEN_STATE            = self.addButton("CitizenState",           "INTERFACE_CITY_CITIZEN_BUTTON")
+		self.PRODUCTION_STATE         = self.addButton("ProductionState",        "INTERFACE_NET_YIELD_BUTTON"        , ProductionAdvisor.ProductionAdvisor(self))
+		self.TRANSPORT_STATE          = self.addButton("TransportState",         "INTERFACE_TRANSPORT_POTENTIAL_BUTTON")
+		self.WAREHOUSE_STATE          = self.addButton("WareHouseState",         "INTERFACE_STORES_BUTTON"           , WarehouseAdvisor.WarehouseAdvisor(self))
+		self.IMPORTEXPORT_STATE       = self.addButton("ImportExportState",      "INTERFACE_CITY_GOVENOR_BUTTON"     , ImportExportAdvisor.ImportExportAdvisor(self))
 		self.TOTAL_PRODUCTION_STATE   = self.addButton("TotalProductionState",   "INTERFACE_TOTAL_PRODUCTION_BUTTON")  # total production page - Nightinggale
 		self.TRADEROUTE_STATE         = self.addButton("TradeRouteState",        "INTERFACE_IMPORT_EXPORT_BUTTON")
 		self.NATIVE_STATE             = self.addButton("NativeState",            "INTERFACE_NATIVE_BUTTON"           , NativeAdvisor.NativeAdvisor(self))
@@ -145,7 +146,7 @@ class CvDomesticAdvisor:
 		self.StateButtons.append("INTERFACE_CITY_LEFT_ARROW")
 		self.StateButtons.append("INTERFACE_CITY_RIGHT_ARROW")
 		# Next Page / Previous Page
-		self.MAX_YIELDS_IN_A_PAGE = 18
+		self.MAX_YIELDS_IN_A_PAGE = 26
 		#self.MAX_YIELDS_IN_A_PAGE = 19
 		#self.MAX_BUILDINGS_IN_A_PAGE = 26
 		self.MAX_BUILDINGS_IN_A_PAGE = 18
@@ -264,7 +265,7 @@ class CvDomesticAdvisor:
 			screen.setTableColumnHeader( PageName + "ListBackground", 2, "<font=2>" + "MAX" + "</font>", self.iWareHouseW)
 		
 		# Headers for pages showing yields
-		for iState in [self.PRODUCTION_STATE, self.IMPORTEXPORT_STATE, self.TOTAL_PRODUCTION_STATE]: # total production page - Nightinggale
+		for iState in [self.PRODUCTION_STATE, self.IMPORTEXPORT_STATE, self.TOTAL_PRODUCTION_STATE, self.TRANSPORT_STATE]: # total production page - Nightinggale
 			self.YieldPages.add(iState)
 			for iYield in range(YieldTypes.YIELD_FOOD, YieldTypes.YIELD_LUXURY_GOODS + 1):
 				iYieldOnPage = iYield % self.MAX_YIELDS_IN_A_PAGE
@@ -548,6 +549,56 @@ class CvDomesticAdvisor:
 
 			screen.setTableText(szState + "ListBackground", 1, i, "<font=2>" + pLoopCity.getName() + "</font>", "", WidgetTypes.WIDGET_YIELD_IMPORT_EXPORT, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
 			# RR - Domestic Advisor Screen - END
+		
+		elif(self.CurrentState == self.TRANSPORT_STATE):
+			start = self.YieldStart()
+			for iYield in range(start, self.YieldEnd()):
+				bExportYield = pLoopCity.isExport(iYield)
+				bImportYield = pLoopCity.isImport(iYield)
+				iThreshold   = pLoopCity.getMaintainLevel(iYield)
+				iNeeds       = pLoopCity.getAutoMaintainThreshold(iYield)
+				iStorage     = pLoopCity.getYieldStored(iYield)
+				iImportLimit = pLoopCity.getImportsLimit(iYield)
+				iStorageSpace = pLoopCity.getMaxYieldCapacity() - pLoopCity.getTotalYieldStored()
+				if iStorageSpace < 0:
+					iStorageSpace = 0
+								
+				exportStr = u""
+				importStr = u""
+				
+				if bExportYield:
+					if pLoopCity.isAutoExportStopped(iYield):
+						exportStr = u"<font=2><color=140,0,0>" + localText.getText("TXT_KEY_OUT", ()) + u"</color></font>"
+					elif iStorage > iThreshold:
+						exportStr = u"<font=2><color=255,0,0>" + str(iStorage - iThreshold) + u"</color></font>"
+					else:
+						exportStr = u"<font=2><color=255,0,0>" + localText.getText("TXT_KEY_OUT", ()) + u"</color></font>"
+				
+				if bImportYield:
+					if pLoopCity.isAutoImportStopped(iYield):
+						importStr = u"<font=2><color=0,140,100>" + localText.getText("TXT_KEY_IN", ()) + u"</color></font>"
+					elif pLoopCity.isImportFeeder(iYield) and iThreshold == 0 and pLoopCity.getFeederThreshold(iYield) == 0 and (not pLoopCity.isAutoImportStopped(iYield)):
+						# special case: feeder auto supply
+						importStr = u"<font=2><color=0,255,180>" + str(iNeeds - iStorage) + u"</color></font>"
+					elif iImportLimit == 0:
+						importStr = u"<font=2><color=0,255,0>" + str(iStorageSpace) + u"</color></font>"
+					elif iStorage < iImportLimit:
+						importStr = u"<font=2><color=0,255,0>" + str(min(iStorageSpace, iImportLimit - iStorage)) + u"</color></font>"
+					else:
+						importStr = u"<font=2><color=0,140,0>" + localText.getText("TXT_KEY_IN", ()) + u"</color></font>"
+				
+				## R&R, Robert Surcouf,  Domestic Advisor Screen - End
+				if (bExportYield and bImportYield):
+					screen.setTableInt(szState + "ListBackground", iYield - start + 2, i, importStr + u"<font=2><color=255,255,0>" + u"/" + u"</color></font>" + exportStr, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
+				elif (not bExportYield and bImportYield):
+					screen.setTableInt(szState + "ListBackground", iYield - start + 2, i, importStr, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
+				elif (bExportYield and not bImportYield):
+					screen.setTableInt(szState + "ListBackground", iYield - start + 2, i, exportStr, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
+				elif iStorage > 0:
+					screen.setTableInt(szState + "ListBackground", iYield - start + 2, i, u"<font=2><color=150,150,150>" + str(iStorage) + u"</color></font>", "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
+
+			screen.setTableText(szState + "ListBackground", 1, i, "<font=2>" + pLoopCity.getName() + "</font>", "", WidgetTypes.WIDGET_YIELD_IMPORT_EXPORT, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
+			# RR - Domestic Advisor Screen - END
 			
 		## R&R, Robert Surcouf,  Domestic Advisor Screen START
 		elif(self.CurrentState == self.GENERAL_STATE and self.CurrentPage == 1): 
@@ -704,22 +755,131 @@ class CvDomesticAdvisor:
 		szState = self.StatePages[self.CurrentState][self.CurrentPage]
 		start = self.YieldStart()
 		
-		for i in range(0,2):
-			sign = ""
-			line_name = "Warehouse"
+		iExportPotential = {}
+		iTransportPotential = {}
+		for i in range(0,8):
 			if i == 0:
 				sign = u"+"
 				line_name = "Production"
+			elif i == 1:
+				sign = ""
+				line_name = "Warehouse"
+			elif i == 2:
+				sign = ""
+				line_name = "Needs"
+			elif i == 3:
+				sign = ""
+				line_name = "Below min"
+			elif i == 4:
+				sign = ""
+				line_name = "Feeder demand"
+			elif i == 5:
+				sign = ""
+				line_name = "Import potential"
+			elif i == 6:
+				sign = ""
+				line_name = "Export potential"
+			else:
+				sign = ""
+				line_name = "Transport potential"
 			screen.setTableText(szState + "ListBackground", 0, i, "<font=2>" +""         + "</font>", "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
 			screen.setTableText(szState + "ListBackground", 1, i, "<font=2>" + line_name + "</font>", "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY )
+			
 			for iYield in range(start, self.YieldEnd()):
 				iNetYield = 0
+				iIPNow = 0
+				iEPNow = 0
+				iTPNow = 0
 				if i == 0:
 					for iCity in range(len(self.Cities)):
 						iNetYield += self.Cities[iCity].calculateNetYield(iYield)
-				else:
+				elif i == 1:
 					for iCity in range(len(self.Cities)):
 						iNetYield += self.Cities[iCity].getYieldStored(iYield)
+				elif i == 2:
+					for iCity in range(len(self.Cities)):
+						if (not self.Cities[iCity].isImportFeeder(iYield)) or self.Cities[iCity].isAutoImportStopped(iYield):
+							continue
+						iAutoThreshold = self.Cities[iCity].getAutoMaintainThreshold(iYield)
+						iThreshold     = self.Cities[iCity].getMaintainLevel(iYield)
+						iStorage       = self.Cities[iCity].getYieldStored(iYield)
+						if (iAutoThreshold > iThreshold) and (iStorage < iAutoThreshold):
+							iNetYield += iAutoThreshold - iStorage
+				elif i == 3:
+					for iCity in range(len(self.Cities)):
+						if not self.Cities[iCity].isImport(iYield):
+							continue
+						if self.Cities[iCity].isImportFeeder(iYield) and self.Cities[iCity].isAutoImportStopped(iYield):
+							continue
+						iThreshold     = self.Cities[iCity].getMaintainLevel(iYield)
+						iStorage       = self.Cities[iCity].getYieldStored(iYield)
+						if iStorage < iThreshold:
+							iNetYield += iThreshold - iStorage
+				elif i == 4:
+					for iCity in range(len(self.Cities)):
+						if (not self.Cities[iCity].isImport(iYield)) or (not self.Cities[iCity].isImportFeeder(iYield)) or self.Cities[iCity].isAutoImportStopped(iYield):
+							continue
+						iFeederThreshold = self.Cities[iCity].getFeederThreshold(iYield)
+						iImportLimit     = self.Cities[iCity].getImportsLimit(iYield)
+						iStorageSpace    = self.Cities[iCity].getMaxYieldCapacity() - self.Cities[iCity].getTotalYieldStored()
+						iStorage         = self.Cities[iCity].getYieldStored(iYield)
+						if iFeederThreshold == 0:
+							iFeederThreshold = self.Cities[iCity].getMaintainLevel(iYield)*4/3
+						if iStorageSpace < 0:
+							iStorageSpace = 0
+						if iStorage < iFeederThreshold:
+							if iImportLimit == 0:
+								iNetYield += iStorageSpace
+							elif iStorage < iImportLimit:
+								iNetYield += min(iStorageSpace, iImportLimit - iStorage)
+				elif i == 5:
+					# calculate the next 3 rows
+					iIPCities = {}
+					iEPCities = {}
+					for iCity in range(len(self.Cities)):
+						iStorage     = self.Cities[iCity].getYieldStored(iYield)
+						# import part of calculations
+						iIPCities[iCity] = 0
+						iEPCities[iCity] = 0
+						if self.Cities[iCity].isImport(iYield):
+							if not(self.Cities[iCity].isImportFeeder(iYield) and self.Cities[iCity].isAutoImportStopped(iYield)):
+								iImportLimit = self.Cities[iCity].getImportsLimit(iYield)
+								iStorageSpace = self.Cities[iCity].getMaxYieldCapacity() - self.Cities[iCity].getTotalYieldStored()
+								if iStorageSpace < 0:
+									iStorageSpace = 0
+								if iImportLimit == 0:
+									if self.Cities[iCity].isImportFeeder(iYield) and self.Cities[iCity].getMaintainLevel(iYield) == 0 and self.Cities[iCity].getProductionNeeded(iYield) > 0:
+										# special feeder case - only needed is to be imported
+										iIPNow += min(iStorageSpace, self.Cities[iCity].getProductionNeeded(iYield) - iStorage)
+									else:
+										iIPNow += iStorageSpace
+									iIPCities[iCity] = iIPNow
+								elif iStorage < iImportLimit:
+									iIPNow += min(iStorageSpace, iImportLimit - iStorage)
+									iIPCities[iCity] = iIPNow
+						
+						# export part of calculations
+						if self.Cities[iCity].isExport(iYield) and (not self.Cities[iCity].isAutoExportStopped(iYield)):
+							iThreshold     = self.Cities[iCity].getMaintainLevel(iYield)
+							if iStorage > iThreshold:
+								iEPNow += iStorage - iThreshold
+								iEPCities[iCity] = iEPNow
+					
+					for iCity in range(len(self.Cities)):
+						# transport potential: ignore self-transport
+						if (iIPCities[iCity] > 0) and (iEPCities[iCity] > 0):
+							# export not calculated if no *other* city can import it
+							iTPNow += min(iEPCities[iCity], iIPNow - iIPCities[iCity]) - iEPCities[iCity]
+						
+					iNetYield = iIPNow
+					iExportPotential[iYield] = iEPNow
+					iTransportPotential[iYield] = min(iIPNow, iEPNow+iTPNow)
+				elif i == 6:
+					iNetYield = iExportPotential[iYield]
+				else:
+					# exclude self-transport situations
+					iNetYield = iTransportPotential[iYield]
+					
 				szText = unicode(iNetYield)
 				if iNetYield > 0:
 					szText = localText.getText("TXT_KEY_COLOR_POSITIVE", ()) + sign + szText + localText.getText("TXT_KEY_COLOR_REVERT", ())
@@ -989,6 +1149,8 @@ class CvDomesticAdvisor:
 			elif iData1 == self.TOTAL_PRODUCTION_STATE:
 				return localText.getText("TXT_KEY_CONCEPT_TOTAL_PRODUCTION", ())
 			# total production page - end - Nightinggale
+			elif iData1 == self.TRANSPORT_STATE:
+				return localText.getText("TXT_KEY_CONCEPT_TRANSPORT_POTENTIAL", ())
 			elif iData1 == self.TRADEROUTE_STATE:
 				return localText.getText("TXT_KEY_DOMESTIC_ADVISOR_STATE_TRADEROUTE", ())
 			elif iData1 == self.NATIVE_STATE:
@@ -1045,7 +1207,7 @@ class CvDomesticAdvisor:
 			screen.setTableColumnHeader(szStateName, 1, "<font=2>" + localText.getText("TXT_KEY_DOMESTIC_ADVISOR_NAME", ()).upper() + "</font>", self.CITY_NAME_COLUMN_WIDTH - 56 )
 
 			# total production page - start - Nightinggale
-			num_cities = 2
+			num_cities = 8
 			
 			if iState != self.TOTAL_PRODUCTION_STATE:
 				num_cities = len(self.Cities)

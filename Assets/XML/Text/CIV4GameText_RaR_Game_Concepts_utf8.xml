@@ -29,4 +29,8 @@
             <Plural>0</Plural>
         </Spanish>
     </TEXT>
+	<TEXT>
+        <Tag>TXT_KEY_CONCEPT_TRANSPORT_POTENTIAL</Tag>
+        <English>Transport potential</English>
+    </TEXT>
 </Civ4GameText>

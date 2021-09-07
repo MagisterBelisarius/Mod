@@ -702,6 +702,10 @@
             <Type>INTERFACE_CITY_GOVENOR_BUTTON</Type>
             <Path>Art/Interface/Screens/City_Management/import_export.dds</Path>
         </InterfaceArtInfo>
+		<InterfaceArtInfo>
+            <Type>INTERFACE_TRANSPORT_POTENTIAL_BUTTON</Type>
+            <Path>Art/Interface/Screens/City_Management/import_export_2.dds</Path>
+        </InterfaceArtInfo>
         <InterfaceArtInfo>
             <Type>INTERFACE_BOX_NEG_END</Type>
             <Path>Art/Interface/Screens/City_Management/BottomBoxEND.dds</Path>
