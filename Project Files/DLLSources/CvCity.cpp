@@ -11002,7 +11002,7 @@ void CvCity::checkImportsMaintain(YieldTypes eYield, bool bUpdateScreen)
 	// Export stopping functionality only activated if the threshold is defined
 	if (iAutoExportThreshold > 0){
 		// export switch off condition
-		if (!isAutoExportStopped(eYield) && (iStoredLevel <= iMaintainLevel)) {
+		if (!isAutoExportStopped(eYield) && (iStoredLevel < std::max(iAutoExportThreshold, iMaintainLevel))) {
 			m_em_bTradeStopAutoExport.set(eYield, true);
 			bScreenUpdate = true;
 		} // export switch on condition
