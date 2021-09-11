@@ -398,6 +398,7 @@ enum InterfaceDirtyBits
 	TradeRoutesAdvisor_DIRTY_BIT,	// TAC - Trade Routes Advisor - koma13
 	AfricaScreen_DIRTY_BIT, /***TRIANGLETRADE 10/23/08 by DPII ***/
 	PortRoyalScreen_DIRTY_BIT, // R&R, ray, Port Royal
+	TradeCitySelector_DIRTY_BIT,
 
 #ifdef _USRDLL
 	NUM_INTERFACE_DIRTY_BITS
@@ -1199,6 +1200,7 @@ enum AutomateTypes
 	AUTOMATE_TRANSPORT_FULL,
 	AUTOMATE_WORKER_SEA, //TAC Whaling, ray
 	AUTOMATE_FULL,
+	AUTOMATE_TRANSPORT_CITIES,
 
 #ifdef _USRDLL
 	NUM_AUTOMATE_TYPES
@@ -1329,6 +1331,7 @@ enum CommandTypes
 	COMMAND_SAIL_TO_PORT_ROYAL, // R&R, ray, Port Royal
 	COMMAND_MERGE_TREASURES, // WTP, merge treasures, of Raubwuerger
 	COMMAND_ESTABLISH_TRADE_POST, // WTP, ray, Native Trade Posts - START
+	COMMAND_CHOOSE_TRANSPORT_CITIES,
 
 #ifdef _USRDLL
 	NUM_COMMAND_TYPES

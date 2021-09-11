@@ -88,6 +88,7 @@
 		<AutomateType>AUTOMATE_TRANSPORT_FULL</AutomateType>
 		<AutomateType>AUTOMATE_WORKER_SEA</AutomateType>
 		<AutomateType>AUTOMATE_FULL</AutomateType>
+		<AutomateType>AUTOMATE_TRANSPORT_CITIES</AutomateType>
 	</AutomateTypes>
 	<DirectionTypes>
 		<!--Changes must be reflected in CvEnums.h-->

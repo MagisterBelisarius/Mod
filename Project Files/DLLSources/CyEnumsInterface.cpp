@@ -189,6 +189,7 @@ void CyEnumsPythonInterface()
 		.value("TradeRoutesAdvisor_DIRTY_BIT", TradeRoutesAdvisor_DIRTY_BIT)	// TAC - Trade Routes Advisor - koma13
 		.value("AfricaScreen_DIRTY_BIT", AfricaScreen_DIRTY_BIT) /*** TRIANGLETRADE 10/24/08 by DPII ***/
 		.value("PortRoyalScreen_DIRTY_BIT", PortRoyalScreen_DIRTY_BIT) // R&R, ray, Port Royal
+		.value("TradeCitySelector_DIRTY_BIT", TradeCitySelector_DIRTY_BIT)
 		.value("NUM_INTERFACE_DIRTY_BITS", NUM_INTERFACE_DIRTY_BITS)
 		;
 	python::enum_<WidgetTypes>("WidgetTypes")
@@ -892,6 +893,7 @@ void CyEnumsPythonInterface()
 		.value("AUTOMATE_TRANSPORT_FULL", AUTOMATE_TRANSPORT_FULL)
 		.value("AUTOMATE_WORKER_SEA", AUTOMATE_WORKER_SEA) //TAC Whaling, ray
 		.value("AUTOMATE_FULL", AUTOMATE_FULL)
+		.value("AUTOMATE_TRANSPORT_CITIES", AUTOMATE_TRANSPORT_CITIES)
 		.value("NUM_AUTOMATE_TYPES", NUM_AUTOMATE_TYPES)
 		;
 	python::enum_<MissionTypes>("MissionTypes")
@@ -994,6 +996,7 @@ void CyEnumsPythonInterface()
 		.value("COMMAND_SAIL_TO_PORT_ROYAL", COMMAND_SAIL_TO_PORT_ROYAL) // R&R, ray, Port Royal
 		.value("COMMAND_MERGE_TREASURES", COMMAND_MERGE_TREASURES) // WTP, merge Treasures, of Raubwuerger
 		.value("COMMAND_ESTABLISH_TRADE_POST", COMMAND_ESTABLISH_TRADE_POST) // WTP, ray, Native Trade Posts - START
+		.value("COMMAND_CHOOSE_TRANSPORT_CITIES", COMMAND_CHOOSE_TRANSPORT_CITIES)
 		.value("NUM_COMMAND_TYPES", NUM_COMMAND_TYPES)
 		;
 	python::enum_<ControlTypes>("ControlTypes")

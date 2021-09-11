@@ -2183,6 +2183,13 @@ bool CvUnit::canDoCommand(CommandTypes eCommand, int iData1, int iData2, bool bT
 			return true;
 		}
 		break;
+	
+	case COMMAND_CHOOSE_TRANSPORT_CITIES:
+		if (iData2 == 0 || canAssignTradeRoute(iData1))
+		{
+			return true;
+		}
+		break;
 
 	case COMMAND_PROMOTE:
 		{
@@ -2514,6 +2521,19 @@ void CvUnit::doCommand(CommandTypes eCommand, int iData1, int iData2)
 				}
 			}
 			// TAC - Trade Routes Advisor - koma13 - END
+
+			break;
+			
+		case COMMAND_CHOOSE_TRANSPORT_CITIES:
+			if (getOwnerINLINE() == GC.getGameINLINE().getActivePlayer())
+			{
+				if (gDLL->getInterfaceIFace()->getHeadSelectedUnit() == this)
+				{
+					CvPopupInfo* pInfo = new CvPopupInfo(BUTTONPOPUP_PYTHON_SCREEN);
+					pInfo->setText(L"showTradeCitySelector");
+					gDLL->getInterfaceIFace()->addPopup(pInfo, getOwnerINLINE(), false);
+				}
+			}
 
 			break;
 
@@ -3498,6 +3518,13 @@ bool CvUnit::canAutomate(AutomateTypes eAutomate) const
 		}
 		break;
 
+	case AUTOMATE_TRANSPORT_CITIES:
+		if (cargoSpace() == 0 || getUnitInfo().isGatherBoat())
+		{
+			return false;
+		}
+		break;
+	
 	default:
 		FAssert(false);
 		break;

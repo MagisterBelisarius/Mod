@@ -11,6 +11,7 @@ import CvAchieveAdvisor
 # TAC - Trade Route Advisor - koma13 - START
 import CvTradeRoutesAdvisor
 # TAC - Trade Route Advisor - koma13 - END
+import CvTradeCitySelector
 
 import CvRevolutionAdvisor
 import CvMilitaryAdvisor
@@ -109,6 +110,11 @@ def showTradeRoutesAdvisor(argsList):
 		tradeRoutesAdvisor.interfaceScreen()
 # TAC - Trade Routes Advisor - koma13 - END
 
+tradeCitySelector = CvTradeCitySelector.CvTradeCitySelector()
+def showTradeCitySelector(argsList):
+	if (-1 != CyGame().getActivePlayer()):
+		tradeCitySelector.interfaceScreen()
+		
 revolutionAdvisor = CvRevolutionAdvisor.CvRevolutionAdvisor()
 def showRevolutionAdvisorScreen(argsList):
 	if (-1 != CyGame().getActivePlayer()):
@@ -740,6 +746,7 @@ HandleCloseMap = {  DAWN_OF_MAN : dawnOfMan,
 				# add new screens here
 				# TAC - Trade Routes Advisor - koma13 - START
 					TRADE_ROUTES_ADVISOR : tradeRoutesAdvisor,
+					TRADE_CITY_SELECTOR : tradeCitySelector,
 				# TAC - Trade Routes Advisor - koma13 - END
 				}
 #######################################################################################
@@ -762,6 +769,7 @@ HandleMouseoverMap = {  EUROPE_SCREEN : europeScreen,
 # Achievements END
 				# TAC - Trade Routes Advisor - koma13 - START
 						TRADE_ROUTES_ADVISOR : tradeRoutesAdvisor,
+						TRADE_CITY_SELECTOR : tradeCitySelector,
 				# TAC - Trade Routes Advisor - koma13 - END
 				}
 #######################################################################################
@@ -813,6 +821,7 @@ HandleInputMap = {  MAIN_INTERFACE : mainInterface,
 # Achievements END
 				# TAC - Trade Routes Advisor - koma13 - START
 					TRADE_ROUTES_ADVISOR : tradeRoutesAdvisor,
+					TRADE_CITY_SELECTOR : tradeCitySelector,
 				# TAC - Trade Routes Advisor - koma13 - END
 				}
 

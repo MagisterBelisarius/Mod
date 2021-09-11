@@ -68,6 +68,14 @@
         <Italian>Automatizza questo trasporto scegliendo le rotte commerciali che dovrebbe seguire.</Italian>
         <Spanish>Automatizar este transporte seleccionando las rutas comerciales que debe seguir.</Spanish>
     </TEXT>
+	<TEXT>
+        <Tag>TXT_KEY_COMMAND_AUTOMATE_TRANSPORT_CITIES</Tag>
+        <English>Automate inter-city transport</English>
+    </TEXT>
+	<TEXT>
+        <Tag>TXT_KEY_COMMAND_AUTOMATE_TRANSPORT_CITIES_HELP</Tag>
+        <English>Automate transport between select cities</English>
+    </TEXT>
     <TEXT>
         <Tag>TXT_KEY_COMMAND_CLEAR_SPECIALTY</Tag>
         <English>Clear specialty</English>
