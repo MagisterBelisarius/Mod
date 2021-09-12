@@ -69,6 +69,12 @@ bool CyUnit::generatePath(CyPlot* pToPlot, int iFlags, bool bReuse, int* piPathT
 {
 	return m_pUnit ? m_pUnit->generatePath(pToPlot->getPlot(), iFlags, bReuse, piPathTurns, bIgnoreDanger) : false;
 }
+
+// py wrapper extra
+int CyUnit::generatePath2(CyPlot* pToPlot, int iFlags, bool bReuse, bool bIgnoreDanger)
+{
+	return m_pUnit ? m_pUnit->generatePath2(pToPlot->getPlot(), iFlags, bReuse, bIgnoreDanger) : -2;
+}
 // TAC - AI Improved Naval AI - koma13 - END
 
 bool CyUnit::canEnterTerritory(int /*PlayerTypes*/ ePlayer, bool bIgnoreRightOfPassage)

@@ -119,6 +119,7 @@ public:
 	// TAC - AI Improved Naval AI - koma13 - START
 	//bool generatePath(const CvPlot* pToPlot, int iFlags = 0, bool bReuse = false, int* piPathTurns = NULL) const;
 	bool generatePath(const CvPlot* pToPlot, int iFlags = 0, bool bReuse = false, int* piPathTurns = NULL, bool bIgnoreDanger = true) const;
+	int generatePath2(const CvPlot* pToPlot, int iFlags = 0, bool bReuse = false, bool bIgnoreDanger = true) const;
 	// TAC - AI Improved Naval AI - koma13 - END
 	bool canEnterTerritory(PlayerTypes ePlayer, bool bIgnoreRightOfPassage = false) const;
 	bool canEnterArea(PlayerTypes ePlayer, const CvArea* pArea, bool bIgnoreRightOfPassage = false) const;

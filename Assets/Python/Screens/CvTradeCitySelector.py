@@ -5,6 +5,7 @@ from CvPythonExtensions import *
 import CvUtil
 import ScreenInput
 import CvScreenEnums
+import array
 
 
 #R&R mod, vetiarvind, trade groups - start
@@ -47,6 +48,7 @@ class CvTradeCitySelector:
 		self.YIELD_TABLE = 3
 		self.EXPORT_TABLE = 4
 		self.IMPORT_TABLE = 5
+		self.CITY_TABLE = 6
 		#R&R mod, vetiarvind, trade groups - start
 		self.LOAD_GROUP_TABLE = 6 		
 		self.DELETE_GROUP_TABLE = 7
@@ -95,10 +97,21 @@ class CvTradeCitySelector:
 		
 		# City list
 		self.CityList = []
+		self.CityDistanceList = []
+		self.ExistingCities, self.AssignedCities = [], {}
+		self.AccessibleCities = []
+
 		(city, iter) = self.player.firstCity(false)
 		while (city):
-			if self.pTransport.generatePath(city.plot(), 0, false, None, true):
-				self.CityList.append(city)
+			self.CityList.append(city)
+			turns = self.pTransport.generatePath2(city.plot(), 0, false, true)
+			if turns >= 0:
+				self.AccessibleCities.append(true)
+				self.CityDistanceList.append(turns)
+			else:
+				self.AccessibleCities.append(false)
+				self.CityDistanceList.append(-1)
+			self.AssignedCities[city.getID()] = false
 			(city, iter) = self.player.nextCity(iter, false)
 		
 		if self.CityList == []:
@@ -123,6 +136,7 @@ class CvTradeCitySelector:
 				self.ExistingRoutes.append(pRoute)
 				self.AssignedRoutes[pRoute.getID()] = self.pTransport.getGroup().isAssignedTradeRoute(pRoute.getID())
 		
+
 		#if len(self.ExistingRoutes) == 0:
 		#	return
 		
@@ -189,7 +203,6 @@ class CvTradeCitySelector:
 		self.TABLE_X = self.STANDARD_MARGIN
 		self.TABLE_Y = self.STANDARD_MARGIN * 2
 		self.TABLE_WIDTH = self.PANEL_WIDTH - self.STANDARD_MARGIN * 2
-		#self.TABLE_HEIGHT = self.PREVIEW_Y - self.TABLE_Y - self.STANDARD_MARGIN / 2 #R&R mod, vetiarvind, trade groups
 		self.TABLE_HEIGHT = self.PREVIEW_Y - self.TABLE_Y - self.STANDARD_MARGIN / 2 - 40 #R&R mod, vetiarvind, trade groups
 		self.ROW_HIGHT = 32		
 		
@@ -240,42 +253,16 @@ class CvTradeCitySelector:
 		self.szButtonPanel = "ButtonPanel"
 		
 		screen.addMultiListControlGFC(self.szButtonPanel, u"", self.BUTTON_X, self.BUTTON_Y, self.BUTTON_WIDTH, self.BUTTON_HEIGHT, 0, self.BUTTON_SIZE, self.BUTTON_SIZE, TableStyles.TABLE_STYLE_STANDARD )
-		
-		# Preview bar
-		self.szPreviewYields = "PreviewYields"
-		self.szPreviewExport = "PreviewExport"
-		self.szPreviewImport = "PreviewImport"
-		
-		CURRENT_X = self.PREVIEW_X
-		TABLE_ID, CLEAR_ID = self.YIELD_TABLE_ID, self.CLEAR_YIELD_ID
-		
-		for szPreview in [self.szPreviewYields, self.szPreviewExport, self.szPreviewImport]:
-			screen.addDDSGFC(szPreview + "Highlight", "Art/Interface/Screens/TradeRoutes/PreviewHighlight.dds", CURRENT_X, self.PREVIEW_Y, self.PREVIEW_WIDTH, self.PREVIEW_HEIGHT, WidgetTypes.WIDGET_GENERAL, -1, -1)
-			screen.addDDSGFC(szPreview + "Background", "Art/Interface/Screens/TradeRoutes/PreviewBackground.dds", CURRENT_X, self.PREVIEW_Y, self.PREVIEW_WIDTH, self.PREVIEW_HEIGHT, WidgetTypes.WIDGET_GENERAL, -1, -1)
-			screen.setImageButton(szPreview + "Border" + str(0), "Art/Interface/Screens/TradeRoutes/PreviewBorder.dds", CURRENT_X, self.PREVIEW_Y, self.PREVIEW_WIDTH, self.PREVIEW_HEIGHT, WidgetTypes.WIDGET_GENERAL, TABLE_ID, -1)
-			screen.addDDSGFCAt(szPreview + "Banner", szPreview + "Border" + str(0), "Art/Interface/Screens/TradeRoutes/BlackPixel.dds", 10, self.PREVIEW_HEIGHT - 26 , self.PREVIEW_WIDTH - 20, 17, WidgetTypes.WIDGET_GENERAL, -1, -1, false)
-			screen.setImageButtonAt(szPreview + "Cancel", szPreview + "Border" + str(0), "Art/Interface/Screens/TradeRoutes/Cancel.dds", self.PREVIEW_WIDTH - 28, 4, 24, 24, WidgetTypes.WIDGET_GENERAL, CLEAR_ID, -1)
-			screen.hide(szPreview + "Highlight")
-			screen.hide(szPreview + "Cancel")
-			screen.hide(szPreview + "Banner")
-			
-			CURRENT_X += self.PREVIEW_WIDTH + self.STANDARD_MARGIN / 2
-			TABLE_ID += 1; CLEAR_ID += 1
-			
-		screen.setLabelAt(self.szPreviewYields + "Title", self.szPreviewYields + "Background", u"<font=3b>" + localText.getText("TXT_KEY_TRADE_ROUTES_YIELD_PREVIEW", ()).upper() + u"</font>", CvUtil.FONT_CENTER_JUSTIFY, self.PREVIEW_WIDTH / 2, self.PREVIEW_HEIGHT / 2, 0, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1)
-		screen.setLabelAt(self.szPreviewExport + "Title", self.szPreviewExport + "Background", u"<font=3b>" + localText.getText("TXT_KEY_TRADE_ROUTES_EXPORT_PREVIEW", ()).upper() + u"</font>", CvUtil.FONT_CENTER_JUSTIFY, self.PREVIEW_WIDTH / 2, self.PREVIEW_HEIGHT / 2, 0, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1)
-		screen.setLabelAt(self.szPreviewImport + "Title", self.szPreviewImport + "Background", u"<font=3b>" + localText.getText("TXT_KEY_TRADE_ROUTES_IMPORT_PREVIEW", ()).upper() + u"</font>", CvUtil.FONT_CENTER_JUSTIFY, self.PREVIEW_WIDTH / 2, self.PREVIEW_HEIGHT / 2, 0, FontTypes.GAME_FONT, WidgetTypes.WIDGET_GENERAL, -1, -1)
 			
 		CyCamera().LookAtUnit(self.pTransport)
 		
-		self.drawContents()
+		self.cityTable()
 		
 		return 0
 
 	
 	def drawContents(self):
-		self.routesTable(true)
-				
+		self.cityTable()
 	
 	def routesTable(self, bRebuild):
 		# Routes tables
@@ -414,6 +401,12 @@ class CvTradeCitySelector:
 		
 		return szLabel
 	
+	def getCityAssignment(self, iCity):
+		szLabel = u"%c" % CyGame().getSymbolID(FontSymbols.CHECKBOX_CHAR)
+		if self.AssignedCities[iCity]:
+			szLabel = u"%c" % CyGame().getSymbolID(FontSymbols.CHECKBOX_SELECTED_CHAR)
+		
+		return szLabel
 
 	def toggleAssignment(self, iRow):
 		iRoute = self.getRouteByTableRow(iRow).getID()
@@ -434,11 +427,26 @@ class CvTradeCitySelector:
 			szLabel = u"%c" % CyGame().getSymbolID(FontSymbols.CHECKBOX_SELECTED_CHAR)
 		
 		self.getScreen().setTableText(self.TableNames[self.CURRENT_TABLE], 1, iRow, szLabel, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_CENTER_JUSTIFY)
+
+	def toggleCityAssignment(self, iRow):
+		iCity = self.getCityByTableRow(iRow)
+			
+		if self.AssignedCities[iCity]:
+			self.AssignedCities[iCity] = false
+			szLabel = u"%c" % CyGame().getSymbolID(FontSymbols.CHECKBOX_CHAR)
+		else:
+			self.AssignedCities[iCity] = true
+			szLabel = u"%c" % CyGame().getSymbolID(FontSymbols.CHECKBOX_SELECTED_CHAR)
+		
+		self.getScreen().setTableText(self.TableNames[self.CURRENT_TABLE], 1, iRow, szLabel, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_CENTER_JUSTIFY)
 		
 		
 	def getRouteByTableRow(self, iRow):
 		return self.player.getTradeRoute(int(self.getScreen().getTableText(self.TableNames[self.CURRENT_TABLE], 0, iRow)))
-		
+	
+	def getCityByTableRow(self, iRow):
+		return int(self.getScreen().getTableText(self.TableNames[self.CURRENT_TABLE], 0, iRow))
+	
 	
 	def yieldTable(self):
 		# Yield table
@@ -474,7 +482,7 @@ class CvTradeCitySelector:
 		screen = self.getScreen()
 		
 		screen.hide(self.TableNames[self.CURRENT_TABLE])
-		self.CURRENT_TABLE = self.EXPORT_TABLE
+		self.CURRENT_TABLE = self.CITY_TABLE
 			
 		szTable = self.TableNames[self.CURRENT_TABLE]
 		szYieldHeader = u""
@@ -485,20 +493,26 @@ class CvTradeCitySelector:
 		screen.addTableControlGFC(szTable, 5, self.TABLE_X, self.TABLE_Y, self.TABLE_WIDTH, self.TABLE_HEIGHT, true, false, 32, 32, TableStyles.TABLE_STYLE_STANDARD)
 		screen.setStyle(szTable, "Table_StandardCiv_Style")
 		screen.enableSort(szTable)
-		screen.enableSelect(szTable, false)
-		screen.setTableColumnHeader(szTable, 0, u"id", 0)
-		screen.setTableColumnHeader(szTable, 1, u"<img=%s size=16></img>" % "Art/Interface/Screens/TradeRoutes/Anchor.dds", 32)
-		screen.setTableColumnHeader(szTable, 2, localText.getText("TXT_KEY_TRADE_ROUTES_EXPORT_TABLE_2", ()), self.TABLE_WIDTH * 2 / 3 - 80)
-		screen.setTableColumnHeader(szTable, 3, u"  %s" % szYieldHeader, 48)
-		screen.setTableColumnHeader(szTable, 4, u"  <img=%s size=16></img>" % "Art/Interface/Screens/TradeRoutes/ExportImport.dds", 48)
+		screen.enableSelect(szTable, true)
+		screen.setTableColumnHeader(szTable, 0, u"id", 30)
+		screen.setTableColumnHeader(szTable, 1, u"", 32)
+		screen.setTableColumnHeader(szTable, 2, u"<img=%s size=16></img>" % "Art/Interface/Screens/TradeRoutes/Anchor.dds", 32)
+		screen.setTableColumnHeader(szTable, 3, localText.getText("TXT_KEY_TRADE_ROUTES_EXPORT_TABLE_2", ()), self.TABLE_WIDTH * 2 / 3 - 80)
+		screen.setTableColumnHeader(szTable, 4, u"distance", 60)
 		
 		iI = 0
 		for city in self.CityList:
+			if self.AccessibleCities[iI]:
+				szColor = u"<color=255,255,255>"
+			else:
+				szColor = u"<color=200,80,80>"
 			screen.appendTableRow(szTable)
 			screen.setTableRowHeight(szTable, iI, self.ROW_HIGHT)
 			screen.setTableText(szTable, 0, iI, u"%d" % city.getID(), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_CENTER_JUSTIFY)
-			screen.setTableText(szTable, 1, iI, self.getHabor(city), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_CENTER_JUSTIFY)
-			screen.setTableText(szTable, 2, iI, u"%s" % city.getName(), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+			screen.setTableText(szTable, 1, iI, self.getCityAssignment(city.getID()), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_CENTER_JUSTIFY)
+			screen.setTableText(szTable, 2, iI, self.getHabor(city), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_CENTER_JUSTIFY)
+			screen.setTableText(szTable, 3, iI, szColor + u"%s" % city.getName() + u"</color>", "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+			screen.setTableText(szTable, 4, iI, u"%2d" % self.CityDistanceList[iI], "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
 			
 			iI += 1
 			
@@ -796,7 +810,12 @@ class CvTradeCitySelector:
 		for pRoute in self.CurrentList:
 			self.AssignedRoutes[pRoute.getID()] = self.bSelected
 		self.routesTable(false)
-		
+
+	def toggleCitySelect(self):
+		self.bSelected = not self.bSelected
+		for city in self.CityList:
+			self.AssignedCities[city.getID()] = self.bSelected
+		self.routesTable(false)
 		
 	def toggleDanger(self):
 		self.bDanger = not self.bDanger
@@ -825,23 +844,17 @@ class CvTradeCitySelector:
 		
 	def handleInput(self, inputClass):
 		if inputClass.getNotifyCode() == NotifyCode.NOTIFY_LISTBOX_ITEM_SELECTED:
-			if inputClass.getFunctionName() in [self.TableNames[self.EXISTING_ROUTES], self.TableNames[self.LIMITED_ROUTES]]:
-				self.toggleAssignment(inputClass.getMouseY())
-			elif inputClass.getFunctionName() == self.TableNames[self.EXPORT_TABLE]:
-				self.selectExport(inputClass.getMouseY())
-			elif inputClass.getFunctionName() == self.TableNames[self.IMPORT_TABLE]:
-				self.selectImport(inputClass.getMouseY())
+			if inputClass.getFunctionName() ==  self.TableNames[self.CITY_TABLE]:
+				self.toggleCityAssignment(inputClass.getMouseY())
 			elif inputClass.getFunctionName() == self.szButtonPanel:
 				if inputClass.getData1() == self.SELECT_ID:
-					self.toggleSelect()
+					self.toggleCitySelect()
 				elif inputClass.getData1() == self.DANGER_ID:
 					self.toggleDanger()
 				elif inputClass.getData1() == self.ROUTES_ID:
 					self.addSelection()
 				elif inputClass.getData1() == self.RETURN_ID:
 					self.routesTable(false)
-				elif inputClass.getData1() == self.SWITCH_ID:
-					self.switchCities()
 			#R&R mod, vetiarvind, trade groups - START
 			elif inputClass.getFunctionName() == self.TableNames[self.LOAD_GROUP_TABLE]:							
 				self.loadSelectedGroup(inputClass.getMouseY())									
@@ -852,49 +865,15 @@ class CvTradeCitySelector:
 		elif inputClass.getNotifyCode() == NotifyCode.NOTIFY_CURSOR_MOVE_ON:
 			if inputClass.getFunctionName() == self.TableNames[self.YIELD_TABLE] + "Selector":
 				self.getScreen().show(self.TableNames[self.YIELD_TABLE] + "Highlight" + str(inputClass.getID()))
-			elif inputClass.getFunctionName() == self.szPreviewYields + "Border":
-				self.getScreen().show(self.szPreviewYields + "Highlight")
-			elif inputClass.getFunctionName() == self.szPreviewExport + "Border":
-				self.getScreen().show(self.szPreviewExport + "Highlight")
-			elif inputClass.getFunctionName() == self.szPreviewImport + "Border":
-				self.getScreen().show(self.szPreviewImport + "Highlight")
 				
 		elif inputClass.getNotifyCode() == NotifyCode.NOTIFY_CURSOR_MOVE_OFF:
 			if inputClass.getFunctionName() == self.TableNames[self.YIELD_TABLE] + "Selector":
 				self.getScreen().hide(self.TableNames[self.YIELD_TABLE] + "Highlight" + str(inputClass.getID()))
-			elif inputClass.getFunctionName() == self.szPreviewYields + "Border":
-				self.getScreen().hide(self.szPreviewYields + "Highlight")
-			elif inputClass.getFunctionName() == self.szPreviewExport + "Border":
-				self.getScreen().hide(self.szPreviewExport + "Highlight")
-			elif inputClass.getFunctionName() == self.szPreviewImport + "Border":
-				self.getScreen().hide(self.szPreviewImport + "Highlight")
 				
 		elif inputClass.getNotifyCode() == NotifyCode.NOTIFY_CLICKED:
 			if inputClass.getButtonType() == WidgetTypes.WIDGET_GENERAL:
-				if inputClass.getData1() == self.YIELD_TABLE_ID:
-					self.yieldTable()
-				elif inputClass.getData1() == self.EXPORT_TABLE_ID:
-					self.cityTable()
-				elif inputClass.getData1() == self.IMPORT_TABLE_ID:
-					self.cityTable()
-					
-				elif inputClass.getData1() == self.YIELD_LIST_ID:
-					self.iYields = inputClass.getData2()
-					self.routesTable(false)
-				
-				elif inputClass.getData1() == self.CLEAR_YIELD_ID:
-					self.iYields = self.NO_YIELD
-					self.routesTable(false)
-				elif inputClass.getData1() == self.CLEAR_EXPORT_ID:
-					self.iExport = self.NO_CITY
-					self.iExportPreview = self.NO_CITY
-					self.routesTable(false)
-				elif inputClass.getData1() == self.CLEAR_IMPORT_ID:
-					self.iImport = self.NO_CITY
-					self.iImportPreview = self.NO_CITY
-					self.routesTable(false)
 				#R&R mod, vetiarvind, trade groups - START
-				elif inputClass.getData1() == self.LOAD_GROUP_ID:
+				if inputClass.getData1() == self.LOAD_GROUP_ID:
 					self.loadGroupTable()
 				elif inputClass.getData1() == self.SAVE_GROUP_ID:					
 					self.saveGroupPopup()				

@@ -2724,6 +2724,18 @@ bool CvUnit::generatePath(const CvPlot* pToPlot, int iFlags, bool bReuse, int* p
 {
 	return getGroup()->generatePath(plot(), pToPlot, iFlags, bReuse, piPathTurns, bIgnoreDanger);
 }
+
+// wrapper for python use
+int CvUnit::generatePath2(const CvPlot* pToPlot, int iFlags, bool bReuse, bool bIgnoreDanger) const
+{
+	int turns;
+	bool outcome;
+	outcome = getGroup()->generatePath(plot(), pToPlot, iFlags, bReuse, &turns, bIgnoreDanger);
+	if (!outcome)
+		return -1;
+	else
+		return turns;
+}
 // TAC - AI Improved Naval AI - koma13 - END
 
 bool CvUnit::canEnterTerritory(PlayerTypes ePlayer, bool bIgnoreRightOfPassage) const

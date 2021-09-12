@@ -33,6 +33,8 @@ public:
 	// TAC - AI Improved Naval AI - koma13 - START
 	//bool generatePath(CyPlot* pToPlot, int iFlags = 0, bool bReuse = false, int* piPathTurns = NULL);
 	bool generatePath(CyPlot* pToPlot, int iFlags = 0, bool bReuse = false, int* piPathTurns = NULL, bool bIgnoreDanger = true);
+	int generatePath2(CyPlot* pToPlot, int iFlags = 0, bool bReuse = false, bool bIgnoreDanger = true);
+	
 	// TAC - AI Improved Naval AI - koma13 - END
 
 	bool canEnterTerritory(int /*PlayerTypes*/ ePlayer, bool bIgnoreRightOfPassage);

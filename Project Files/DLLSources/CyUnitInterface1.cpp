@@ -27,6 +27,7 @@ void CyUnitPythonInterface1(python::class_<CyUnit>& x)
 		// TAC - AI Improved Naval AI - koma13 - START
 		//.def("generatePath", &CyUnit::generatePath, "bool (CyPlot* pToPlot, int iFlags = 0, bool bReuse = false, int* piPathTurns = NULL)")
 		.def("generatePath", &CyUnit::generatePath, "bool (CyPlot* pToPlot, int iFlags = 0, bool bReuse = false, int* piPathTurns = NULL, bool bIgnoreDanger = true)")
+		.def("generatePath2", &CyUnit::generatePath2, "int (CyPlot* pToPlot, int iFlags = 0, bool bReuse = false, bool bIgnoreDanger = true)")
 		// TAC - AI Improved Naval AI - koma13 - END
 
 		.def("canEnterTerritory", &CyUnit::canEnterTerritory, "bool (int (PlayerTypes) ePlayer, bool bIgnoreRightOfPassage)")
