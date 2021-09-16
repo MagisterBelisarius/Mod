@@ -935,7 +935,7 @@ bool CvSelectionGroupAI::AI_tradeRoutes()
 		}
 	}
 
-	if (!isHuman() || (getAutomateType() == AUTOMATE_TRANSPORT_FULL))
+	if (!isHuman() || (getAutomateType() == AUTOMATE_TRANSPORT_FULL) || (getAutomateType() == AUTOMATE_TRANSPORT_CITIES))
 	{
 		std::vector<CvTradeRoute*> aiRoutes;
 		kOwner.getTradeRoutes(aiRoutes);
@@ -958,6 +958,13 @@ bool CvSelectionGroupAI::AI_tradeRoutes()
 				continue;
 			}
 			// transport feeder - end - Nightinggale
+
+			// city restricted auto mode
+			if (getAutomateType() == AUTOMATE_TRANSPORT_CITIES){
+				if (m_aTradeRoutes.find(pDestinationCity->getID()) == m_aTradeRoutes.end() || m_aTradeRoutes.find(pSourceCity->getID()) == m_aTradeRoutes.end())
+					FAssertMsg(false, "City auto transport limit activated")
+					continue;
+			}
 
 			// traderoute fix - start - Nightinggale
 			if (isHuman() && (pRoute->getDestinationCity().eOwner != getOwnerINLINE() || (pRoute->getDestinationCity() == kEurope)))

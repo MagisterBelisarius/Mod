@@ -3306,7 +3306,7 @@ void CvSelectionGroup::setAutomateType(AutomateTypes eNewValue)
 		}
 
 		//clear all trade routes
-		if (eNewValue != AUTOMATE_TRANSPORT_ROUTES)
+		if (!(eNewValue == AUTOMATE_TRANSPORT_ROUTES || eNewValue == AUTOMATE_TRANSPORT_CITIES))
 		{
 			clearTradeRoutes();
 		}
@@ -4248,6 +4248,47 @@ void CvSelectionGroup::assignTradeRoute(int iRouteID, bool bAssign)
 		else
 		{
 			setAutomateType(AUTOMATE_TRANSPORT_ROUTES);
+		}
+	}
+	gDLL->getInterfaceIFace()->setDirty(Domestic_Advisor_DIRTY_BIT, true);
+}
+
+void CvSelectionGroup::assignCityTransport(int iCityID, int iAssign)
+{
+	if (GET_PLAYER(getOwnerINLINE()).getCity(iCityID) == NULL)
+	{
+		FAssertMsg(false, "City not found!");
+		return;
+	}
+	
+	char msg[256];
+	const wchar* tt = CvPlayerAI::getPlayer(getOwnerINLINE()).getCity(iCityID)->getName().GetCString();
+	//char tt3[256];
+	//wcsrtombs(tt3,&tt,20,NULL);
+	sprintf(msg, "City: %s was assigned as %d", tt, iAssign);
+	FAssertMsg(false, msg);
+	bool bPreviousEmpty = m_aTradeRoutes.empty();
+
+	if (iAssign > 0)
+	{
+		m_aTradeRoutes.insert(iCityID);
+	}
+	else
+	{
+		m_aTradeRoutes.erase(iCityID);
+	}
+
+	bool bNewEmpty = m_aTradeRoutes.empty();
+	if(bNewEmpty != bPreviousEmpty)
+	{
+		if (bNewEmpty)
+		{
+			setAutomateType(NO_AUTOMATE);
+		}
+		else
+		{
+			setAutomateType(AUTOMATE_TRANSPORT_CITIES);
+			FAssertMsg(false, "City auto set!");
 		}
 	}
 	gDLL->getInterfaceIFace()->setDirty(Domestic_Advisor_DIRTY_BIT, true);

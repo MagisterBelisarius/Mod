@@ -8,6 +8,14 @@
         <Tag>TXT_KEY_COMMAND_ASSIGN_TRADE_ROUTE_HELP</Tag>
         <English>TXT_KEY_COMMAND_CHOOSE_TRADE_ROUTES_HELP</English>
     </TEXT>
+	<TEXT>
+        <Tag>TXT_KEY_COMMAND_ASSIGN_CITY_TRANSPORT</Tag>
+        <English>TXT_KEY_COMMAND_CHOOSE_TRADE_ROUTES</English>
+    </TEXT>
+    <TEXT>
+        <Tag>TXT_KEY_COMMAND_ASSIGN_CITY_TRANSPORT_HELP</Tag>
+        <English>TXT_KEY_COMMAND_CHOOSE_TRADE_ROUTES_HELP</English>
+    </TEXT>
     <TEXT>
         <Tag>TXT_KEY_COMMAND_AUTOMATE</Tag>
         <English>Automate the unit</English>

@@ -2178,12 +2178,7 @@ bool CvUnit::canDoCommand(CommandTypes eCommand, int iData1, int iData2, bool bT
 
 	case COMMAND_CHOOSE_TRADE_ROUTES:
 	case COMMAND_ASSIGN_TRADE_ROUTE:
-		if (iData2 == 0 || canAssignTradeRoute(iData1))
-		{
-			return true;
-		}
-		break;
-	
+	case COMMAND_ASSIGN_CITY_TRANSPORT:
 	case COMMAND_CHOOSE_TRANSPORT_CITIES:
 		if (iData2 == 0 || canAssignTradeRoute(iData1))
 		{
@@ -2541,6 +2536,14 @@ void CvUnit::doCommand(CommandTypes eCommand, int iData1, int iData2)
 			if (isGroupHead())
 			{
 				getGroup()->assignTradeRoute(iData1, iData2);
+			}
+			break;
+			
+		case COMMAND_ASSIGN_CITY_TRANSPORT:
+			FAssertMsg(false, "Assigning city command");
+			if (isGroupHead())
+			{
+				getGroup()->assignCityTransport(iData1, iData2);
 			}
 			break;
 

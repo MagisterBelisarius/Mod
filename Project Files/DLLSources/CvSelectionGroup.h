@@ -184,6 +184,7 @@ public:
 
 	bool canAssignTradeRoute(int iRouteID, bool bReusePath = false) const;
 	void assignTradeRoute(int iRouteID, bool bAssign);
+	void assignCityTransport(int iCityID, int iAssign);
 	bool isAssignedTradeRoute(int iRouteId) const;
 	void clearTradeRoutes();
 
