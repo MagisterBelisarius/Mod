@@ -4261,12 +4261,10 @@ void CvSelectionGroup::assignCityTransport(int iCityID, int iAssign)
 		return;
 	}
 	
-	char msg[256];
-	const wchar* tt = CvPlayerAI::getPlayer(getOwnerINLINE()).getCity(iCityID)->getName().GetCString();
-	//char tt3[256];
-	//wcsrtombs(tt3,&tt,20,NULL);
-	sprintf(msg, "City: %s was assigned as %d", tt, iAssign);
-	FAssertMsg(false, msg);
+	//char msg[256];
+	//const CvWString tt = CvPlayerAI::getPlayer(getOwnerINLINE()).getCity(iCityID)->getName();
+	//sprintf(msg, "City: %ls was assigned as %d", tt.GetCString(), iAssign);
+	//FAssertMsg(false, msg);
 	bool bPreviousEmpty = m_aTradeRoutes.empty();
 
 	if (iAssign > 0)

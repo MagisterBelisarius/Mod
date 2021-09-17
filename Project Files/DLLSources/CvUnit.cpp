@@ -2535,16 +2535,22 @@ void CvUnit::doCommand(CommandTypes eCommand, int iData1, int iData2)
 		case COMMAND_ASSIGN_TRADE_ROUTE:
 			if (isGroupHead())
 			{
-				getGroup()->assignTradeRoute(iData1, iData2);
+				if (iData2 > 1){
+					char msg[256]; sprintf(msg, "City; data %d, %d", iData1, iData2);
+					FAssertMsg(false, msg);
+					getGroup()->assignCityTransport(iData1, iData2>2);
+				}else{
+					char msg[256]; sprintf(msg, "Route; data %d, %d", iData1, iData2);
+					FAssertMsg(false, msg);
+					getGroup()->assignTradeRoute(iData1, iData2>0);
+				}
+			}else{
+				char msg[256]; sprintf(msg, "Fail; data %d, %d", iData1, iData2);
+				FAssertMsg(false, msg)
 			}
 			break;
 			
 		case COMMAND_ASSIGN_CITY_TRANSPORT:
-			FAssertMsg(false, "Assigning city command");
-			if (isGroupHead())
-			{
-				getGroup()->assignCityTransport(iData1, iData2);
-			}
 			break;
 
 		case COMMAND_PROMOTE:
@@ -2657,12 +2663,14 @@ void CvUnit::doCommand(CommandTypes eCommand, int iData1, int iData2)
 
 		// TAC - Trade Routes Advisor - koma13 - START
 		case COMMAND_IGNORE_DANGER:
-			if (iData1 > 0)
+			if (iData2 > 1){
+				// char msg[256]; sprintf(msg, "Danger / city; data %d, %d", iData1, iData2);
+				// FAssertMsg(false, msg);
+				getGroup()->assignCityTransport(iData1, iData2>2);
+			}else if (iData1 > 0)
 			{
 				setIgnoreDanger(true);
-			}
-			else
-			{
+			}else{
 				setIgnoreDanger(false);
 			}
 			break;

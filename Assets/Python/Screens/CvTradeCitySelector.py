@@ -421,7 +421,7 @@ class CvTradeCitySelector:
 		self.cityTable()
 		
 	def toggleDanger(self):
-		CyMessageControl().sendDoCommand(self.pTransport.getID(), CommandTypes.COMMAND_ASSIGN_CITY_TRANSPORT, self.CityList[0].getID(), 2, true)
+		#CyMessageControl().sendDoCommand(self.pTransport.getID(), CommandTypes.COMMAND_ASSIGN_TRADE_ROUTE, self.CityList[0].getID(), 3, true)
 		self.bDanger = not self.bDanger
 		CyMessageControl().sendDoCommand(self.pTransport.getID(), CommandTypes.COMMAND_IGNORE_DANGER, self.bDanger, -1, false)
 		self.updateButtons()
@@ -502,7 +502,8 @@ class CvTradeCitySelector:
 		
 	def onClose(self) :
 		for iCity, bAssigned in self.AssignedCities.iteritems():
-			CyMessageControl().sendDoCommand(self.pTransport.getID(), CommandTypes.COMMAND_ASSIGN_CITY_TRANSPORT, iCity, bAssigned*2, false)
+			#CyMessageControl().sendDoCommand(self.pTransport.getID(), CommandTypes.COMMAND_ASSIGN_TRADE_ROUTE, iCity, bAssigned+2, false)
+			CyMessageControl().sendDoCommand(self.pTransport.getID(), CommandTypes.COMMAND_IGNORE_DANGER, iCity, bAssigned+2, false)
 		
 		return 0
 	

@@ -166,6 +166,7 @@ bool CvUnitAI::AI_update()
 				break;
 			
 			case AUTOMATE_TRANSPORT_FULL:
+			case AUTOMATE_TRANSPORT_CITIES:
 				AI_transportMoveFull();
 				break;
 			//TAC Whaling, ray
@@ -3915,6 +3916,7 @@ void CvUnitAI::AI_transportMoveRoutes()
 
 void CvUnitAI::AI_transportMoveFull()
 {
+	FAssertMsg(false, "ai transpo move full")
 	if (AI_breakAutomation())
 	{
 		return;
@@ -9475,13 +9477,14 @@ bool CvUnitAI::AI_continueMission(int iAbortDistance, MissionAITypes eValidMissi
 
 bool CvUnitAI::AI_breakAutomation()
 {
+	FAssertMsg(false, "breaking from auto")
 	if (!isAutomated())
 	{
 		return false;
 	}
 	
 	bool bBreak = false;
-	if ((getGroup()->getAutomateType() == AUTOMATE_TRANSPORT_ROUTES) || (getGroup()->getAutomateType() == AUTOMATE_TRANSPORT_FULL))
+	if ((getGroup()->getAutomateType() == AUTOMATE_TRANSPORT_ROUTES) || (getGroup()->getAutomateType() == AUTOMATE_TRANSPORT_FULL) || (getGroup()->getAutomateType() == AUTOMATE_TRANSPORT_CITIES))
 	{
 		CLLNode<IDInfo>* pUnitNode = plot()->headUnitNode();
 		CvUnit* pLoopUnit;

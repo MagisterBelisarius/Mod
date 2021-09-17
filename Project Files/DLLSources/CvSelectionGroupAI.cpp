@@ -895,7 +895,7 @@ void CvSelectionGroupAI::processTradeRoute(CvTradeRoute* pRoute, std::map<IDInfo
 bool CvSelectionGroupAI::AI_tradeRoutes()
 {
 	PROFILE_FUNC();
-
+	FAssertMsg(false,"AI route function")
 	const IDInfo kEurope(getOwnerINLINE(), CvTradeRoute::EUROPE_CITY_ID);
 
 	CvCity* pPlotCity = plot()->getPlotCity();
@@ -961,8 +961,7 @@ bool CvSelectionGroupAI::AI_tradeRoutes()
 
 			// city restricted auto mode
 			if (getAutomateType() == AUTOMATE_TRANSPORT_CITIES){
-				if (m_aTradeRoutes.find(pDestinationCity->getID()) == m_aTradeRoutes.end() || m_aTradeRoutes.find(pSourceCity->getID()) == m_aTradeRoutes.end())
-					FAssertMsg(false, "City auto transport limit activated")
+				if ( (pDestinationCity != NULL && m_aTradeRoutes.find(pDestinationCity->getID()) == m_aTradeRoutes.end()) || (pSourceCity != NULL && m_aTradeRoutes.find(pSourceCity->getID()) == m_aTradeRoutes.end()))
 					continue;
 			}
 
