@@ -91,6 +91,7 @@ private:
 	bool isYieldSupportedInExportPanelForCity(CvCity* pCity, YieldTypes eYield); // R&R mod, vetiarvind, max yield import limit
 	//R&R mod, vetiarvind, trade groups - start
 	bool launchSaveTradeGroupPopup(CvPopup* pPopup, CvPopupInfo &info);	
+	bool launchSaveCityGroupPopup(CvPopup* pPopup, CvPopupInfo &info);	
 	std::vector<std::string> CvDLLButtonPopup::split(CvString &s, char delim);
 	//R&R mod, vetiarvind, trade groups - end
 	bool launchChooseCityPlotYieldPopup(CvPopup* pPopup, CvPopupInfo &info);

@@ -17,6 +17,7 @@
 #include "CvGlobals.h"
 #include "CyTradeRoute.h"
 #include "CyTradeRouteGroup.h" // R&R mod, vetiarvind, trade groups
+#include "CyCityGroup.h"
 #include "CyData.h"
 
 
@@ -1506,6 +1507,28 @@ CyTradeRouteGroup* CyPlayer::getTradeGroup(int iIndex)
 }
 
 // R&R mod, vetiarvind, trade groups - end
+int CyPlayer::addCityGroup(const std::wstring groupName)
+{
+	return m_pPlayer ? m_lastUpdatedCitygroup = m_pPlayer->addCityGroup(groupName) : -1;
+}
+bool CyPlayer::editCityGroup(int iId, const std::wstring groupName)
+{
+	return m_pPlayer ? m_pPlayer->editCityGroup(iId, groupName) : false;
+}
+bool CyPlayer::removeCityGroup(int iId)
+{
+	return m_pPlayer ? m_pPlayer->removeCityGroup(iId) : false;
+}
+
+int CyPlayer::getNumCityGroups() const
+{
+	return m_pPlayer ? m_pPlayer->getNumCityGroups() : 0;
+}
+
+CyCityGroup* CyPlayer::getCityGroup(int iIndex)
+{
+	return m_pPlayer ? new CyCityGroup(m_pPlayer->getCityGroup(iIndex)) : NULL;
+}
 
 CyInfoArray* CyPlayer::getSpecialBuildingTypes() const
 {

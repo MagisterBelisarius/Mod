@@ -25,6 +25,7 @@
 #include "CyPlot.h"
 #include "CvTradeRoute.h"
 #include "CvTradeRouteGroup.h" //R&R mod, vetiarvind, trade groups
+#include "CvCityGroup.h"
 #include <numeric>
 #include <algorithm>
 
@@ -22130,6 +22131,83 @@ CvTradeRouteGroup* CvPlayer::getTradeRouteGroup(int iIndex) const
 int CvPlayer::getNumTradeGroups() const
 {	
 	return m_aTradeGroups.size();
+}
+
+// city restricted auto transport - Belisarius
+int CvPlayer::addCityGroup(const std::wstring groupName)
+{
+	for (CvIdVector<CvCityGroup>::iterator it = m_aCityGroups.begin(); it != m_aCityGroups.end(); ++it)
+	{
+		CvCityGroup* pTradeRouteGroup = it->second;
+		if (pTradeRouteGroup->getName(0).compare(groupName) == 0)			
+		{
+			pTradeRouteGroup->clearCities();
+			return pTradeRouteGroup->getID();
+		}
+	}
+
+	CvCityGroup* pTradeRouteGroup = m_aCityGroups.addNew();
+	pTradeRouteGroup->setName(groupName.c_str());	
+	if (getID() == GC.getGameINLINE().getActivePlayer())
+	{
+		gDLL->getInterfaceIFace()->setDirty(Domestic_Advisor_DIRTY_BIT, true);
+	}
+
+	return pTradeRouteGroup->getID();
+}
+
+
+bool CvPlayer::editCityGroup(int iId, const std::wstring groupName)
+{
+	CvCityGroup* pCityGroup = getCityGroup(iId);
+	if (pCityGroup == NULL)
+	{
+		return false;
+	}
+
+	for (CvIdVector<CvCityGroup>::iterator it = m_aCityGroups.begin(); it != m_aCityGroups.end(); ++it)	
+	{
+		CvCityGroup* pLoopTradeRouteGroup = it->second;
+		if (pCityGroup->getName(0).compare(groupName) == 0)		
+		{
+			return false;
+		}
+	}
+
+	pCityGroup->setName(groupName.c_str());	
+
+	return true;
+}
+
+
+bool CvPlayer::removeCityGroup(int iId)
+{	
+	return m_aCityGroups.removeById(iId);	
+}
+
+CvCityGroup* CvPlayer::getCityGroupById(int cityGroupId) const
+{		
+	return m_aCityGroups.getById(cityGroupId);
+}
+
+CvCityGroup* CvPlayer::getCityGroup(int iIndex) const
+{		
+	FAssert(iIndex >= 0 && iIndex < getNumCityGroups());	
+	int i = 0;
+	for (CvIdVector<CvCityGroup>::const_iterator it = m_aCityGroups.begin(); it != m_aCityGroups.end(); ++it)
+	{
+		if (i++ == iIndex)
+		{
+			return it->second;
+		}
+	}
+
+	return NULL;
+}
+
+int CvPlayer::getNumCityGroups() const
+{	
+	return m_aCityGroups.size();
 }
 
 // R&R mod, vetiarvind, trade groups - end

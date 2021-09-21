@@ -66,6 +66,7 @@ const char* getSavedEnumNameDeal(SavegameVariableTypes eType);
 const char* getSavedEnumNameReplayMessage(SavegameVariableTypes eType);
 const char* getSavedEnumNameTeam(SavegameVariableTypes eType);
 const char* getSavedEnumNameTeamAI(SavegameVariableTypes eType);
+const char* getSavedEnumNameCityGroup(SavegameVariableTypes eType);
 
 const char* getSavedEnumName(SavegameClassTypes eClass, SavegameVariableTypes eType)
 {
@@ -92,6 +93,7 @@ const char* getSavedEnumName(SavegameClassTypes eClass, SavegameVariableTypes eT
 	case SAVEGAME_CLASS_REPLAYMESSAGE: return getSavedEnumNameReplayMessage(eType);
 	case SAVEGAME_CLASS_TEAM: return getSavedEnumNameTeam(eType);
 	case SAVEGAME_CLASS_TEAM_AI: return getSavedEnumNameTeamAI(eType);
+	case SAVEGAME_CLASS_CITYGROUP: return getSavedEnumNameCityGroup(eType);
 
 	}
 
@@ -469,7 +471,7 @@ void CvSavegameReader::Read(CvPopupButtonPython   & variable) { variable.read(*t
 void CvSavegameReader::Read(CvPopupInfo           & variable) { variable.read(*this); }
 void CvSavegameReader::Read(CvTalkingHeadMessage  & variable) { variable.read(*this); }
 void CvSavegameReader::Read(CvTradeRouteGroup     & variable) { variable.read(*this); }
-
+void CvSavegameReader::Read(CvCityGroup           & variable) { variable.read(*this); }
 
 ///
 ///
@@ -780,7 +782,7 @@ void CvSavegameWriter::Write(CvPopupButtonPython  &variable) { variable.write(*t
 void CvSavegameWriter::Write(CvPopupInfo          &variable) { variable.write(*this); }
 void CvSavegameWriter::Write(CvTalkingHeadMessage &variable) { variable.write(*this); }
 void CvSavegameWriter::Write(CvTradeRouteGroup    &variable) { variable.write(*this); }
-
+void CvSavegameWriter::Write(CvCityGroup          &variable) { variable.write(*this); }
 
 ///
 ///
@@ -945,6 +947,7 @@ int getNumSavedEnumValuesDeal();
 int getNumSavedEnumValuesReplayMessage();
 int getNumSavedEnumValuesTeam();
 int getNumSavedEnumValuesTeamAI();
+int getNumSavedEnumValuesCityGroup();
 
 void CvSavegameWriterBase::InitSavegame()
 {
@@ -988,7 +991,8 @@ void CvSavegameWriterBase::InitSavegame()
 		case SAVEGAME_CLASS_REPLAYMESSAGE:  iCount = getNumSavedEnumValuesReplayMessage(); break;
 		case SAVEGAME_CLASS_TEAM:  iCount = getNumSavedEnumValuesTeam(); break;
 		case SAVEGAME_CLASS_TEAM_AI:  iCount = getNumSavedEnumValuesTeamAI(); break;
-
+		case SAVEGAME_CLASS_CITYGROUP:  iCount = getNumSavedEnumValuesCityGroup(); break;
+		
 		default:
 			FAssertMsg(false, "missing case");
 		}

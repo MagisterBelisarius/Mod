@@ -772,6 +772,26 @@ void CvDLLButtonPopup::OnOkClicked(CvPopup* pPopup, PopupReturn *pPopupReturn, C
 			
 		}
 		break;
+	
+	case BUTTONPOPUP_SAVE_CITYGROUP:
+		if (pPopupReturn->getButtonClicked() != -2) //not nvm button
+		{
+			const wchar* szGroupName = pPopupReturn->getEditBoxString(0);
+			CvPlayer& player = GET_PLAYER(GC.getGameINLINE().getActivePlayer());
+			int lastAddedId = player.addCityGroup(szGroupName);			
+			CvCityGroup* addedCityGroup = player.getCityGroupById(lastAddedId)						;
+			CvString str(info.getText().c_str());			
+			
+			std::vector<std::string> cities = split(str, ',');
+			for(uint i = 0 ; i < cities.size(); ++i)
+			{
+				CvString CityStr = CvString(cities[i]);
+				
+				addedCityGroup->addCity(atoi(CityStr));
+			}
+			
+		}
+		break;
 
 	//R&R mod, vetiarvind, trade groups - end
 	
@@ -1369,7 +1389,10 @@ bool CvDLLButtonPopup::launchButtonPopup(CvPopup* pPopup, CvPopupInfo &info)
 		bLaunched = launchSaveTradeGroupPopup(pPopup, info);
 		break;
 	//R&R mod, vetiarvind, trade groups - end
-
+	case BUTTONPOPUP_SAVE_CITYGROUP:
+		bLaunched = launchSaveCityGroupPopup(pPopup, info);
+		break;
+	
 	case BUTTONPOPUP_FOUNDING_FATHER:
 		bLaunched = launchFoundingFatherPopup(pPopup, info);
 		break;
@@ -3751,6 +3774,24 @@ bool CvDLLButtonPopup::launchPurchasePortRoyalUnitPopup(CvPopup* pPopup, CvPopup
 
 //R&R mod, vetiarvind, trade groups - start
 bool CvDLLButtonPopup::launchSaveTradeGroupPopup(CvPopup* pPopup, CvPopupInfo &info)
+{
+	PlayerTypes ePlayer = GC.getGameINLINE().getActivePlayer();
+	if (ePlayer == NO_PLAYER)
+	{
+		return false;
+	}
+	
+
+	gDLL->getInterfaceIFace()->popupSetHeaderString(pPopup, gDLL->getText("TXT_KEY_PITBOSS_SAVE"));
+	gDLL->getInterfaceIFace()->popupCreateEditBox(pPopup);
+	gDLL->getInterfaceIFace()->popupAddGenericButton(pPopup, gDLL->getText("TXT_KEY_NEVER_MIND"), ARTFILEMGR.getInterfaceArtInfo("INTERFACE_BUTTONS_CANCEL")->getPath(), -2, WIDGET_GENERAL);
+		
+	gDLL->getInterfaceIFace()->popupLaunch(pPopup, true, POPUPSTATE_IMMEDIATE);
+
+	return true;
+}
+
+bool CvDLLButtonPopup::launchSaveCityGroupPopup(CvPopup* pPopup, CvPopupInfo &info)
 {
 	PlayerTypes ePlayer = GC.getGameINLINE().getActivePlayer();
 	if (ePlayer == NO_PLAYER)

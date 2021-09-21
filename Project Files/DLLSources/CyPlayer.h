@@ -15,6 +15,7 @@ class CyPlot;
 class CySelectionGroup;
 class CyTradeRoute;
 class CyTradeRouteGroup;
+class CyCityGroup;
 
 class CyPlayer
 {
@@ -385,6 +386,12 @@ public:
 	int getNumTradeGroups() const;
 	CyTradeRouteGroup* getTradeGroup(int iIndex);	
 	// R&R mod, vetiarvind, trade groups - end
+	int addCityGroup(const std::wstring groupName);
+	bool editCityGroup(int iId, const std::wstring groupName);
+	bool removeCityGroup(int iId);
+	int getNumCityGroups() const;
+	CyCityGroup* getCityGroup(int iIndex);	
+	
 
 	CyInfoArray* getSpecialBuildingTypes() const;
 	CyInfoArray* getStoredYieldTypes() const;
@@ -403,5 +410,6 @@ private:
 	int m_lastUpdatedTradegroup; 
 	int m_loadedTradeGroup;
 	// R&R mod, vetiarvind, trade groups - end
+	int m_lastUpdatedCitygroup; 
 };
 #endif	// CyPlayer_h

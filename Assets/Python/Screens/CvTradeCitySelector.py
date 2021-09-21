@@ -263,12 +263,7 @@ class CvTradeCitySelector:
 			
 		self.updateButtons()
 	
-	#R&R mod, vetiarvind, trade groups - start
-	
-	
 	def populateGroupTable(self, newTable, headerLabel):
-		#self.getScreen().modifyLabel(self.szTitle, u"<font=3b>" + self.TableLabel[self.CURRENT_TABLE] + "blaa" + u"</font>", CvUtil.FONT_LEFT_JUSTIFY)		
-		
 		screen = self.getScreen()		
 		screen.hide(self.TableNames[self.CURRENT_TABLE])
 		self.CURRENT_TABLE = newTable
@@ -280,41 +275,26 @@ class CvTradeCitySelector:
 		screen.setStyle(szTable, "Table_StandardCiv_Style")
 		screen.enableSort(szTable)
 		screen.enableSelect(szTable, false)
-		screen.setTableColumnHeader(szTable, 0, u"id", 0)		
-		screen.setTableColumnHeader(szTable, 1, u"Routes", 0)		
-		screen.setTableColumnHeader(szTable, 2, localText.getText("TXT_KEY_NAME_COL_TRADE_GROUP", ()), self.TABLE_WIDTH / 4)				
-		screen.setTableColumnHeader(szTable, 3, localText.getText("TXT_KEY_DESC_COL_TRADE_GROUP", ()), self.TABLE_WIDTH * 3 / 4)		
+		screen.setTableColumnHeader(szTable, 0, u"id", 0)
+		screen.setTableColumnHeader(szTable, 1, u"Cities", 0)
+		screen.setTableColumnHeader(szTable, 2, localText.getText("TXT_KEY_NAME_COL_TRADE_GROUP", ()), self.TABLE_WIDTH / 4)			
 		iI = 0
-		numTg = self.player.getNumTradeGroups()		
+		numTg = self.player.getNumCityGroups()
 		
 		for itg in range(numTg):
-			tg = self.player.getTradeGroup(itg)
+			tg = self.player.getCityGroup(itg)
 			
-			iRoutes = []			
-			iRouteDetails = {}
-			iRC = tg.getRouteCount()
-			
-			for iRt in range(iRC):
-				rt = tg.getRouteByIndex(iRt)				
-				srcCityName = rt.getSourceCityName()
-				destCityName = rt.getDestinationCityName()
-				if len(srcCityName)==0 or len(destCityName) == 0:
-					continue
-				iRoutes.append(str(rt.getSourceCity().iID) + " " + str(rt.getDestinationCity().iID) + " " + str(rt.getYield()))	
-				descKeyStr = srcCityName + "-" + destCityName				
-				if descKeyStr in iRouteDetails:
-					iRouteDetails[descKeyStr].append(u"<font=3>%c</font>" % gc.getYieldInfo(rt.getYield()).getChar())
-				else:
-					iRouteDetails[descKeyStr] = [u"<font=3>%c</font>" % gc.getYieldInfo(rt.getYield()).getChar()]
-				
-			routeIdsStr = ','.join(str(x) for x in iRoutes)			
-			routeDetailsStr = ','.join("%s%s" % (''.join(val), key) for (key, val) in iRouteDetails.iteritems() )
+			iCities = []
+
+			for city in self.CityList:
+				if tg.containsCity(city.getID()):
+					iCities.append(city.getID())
+			cityIDsStr = ','.join(str(x) for x in iCities)
 			screen.appendTableRow(szTable)
 			screen.setTableRowHeight(szTable, iI, self.ROW_HIGHT)
 			screen.setTableText(szTable, 0, iI, u"%d" % tg.getID(), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_CENTER_JUSTIFY)
-			screen.setTableText(szTable, 1, iI, u"%s" % routeIdsStr, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_CENTER_JUSTIFY)
-			screen.setTableText(szTable, 2, iI, u"%s" % tg.getName(), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_CENTER_JUSTIFY)			
-			screen.setTableText(szTable, 3, iI, u"%s" % routeDetailsStr, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_LEFT_JUSTIFY)
+			screen.setTableText(szTable, 1, iI, u"%s" % cityIDsStr, "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_CENTER_JUSTIFY)
+			screen.setTableText(szTable, 2, iI, u"%s" % tg.getName(), "", WidgetTypes.WIDGET_GENERAL, -1, -1, CvUtil.FONT_CENTER_JUSTIFY)
 			
 			iI += 1		
 		self.updateButtons()
@@ -326,20 +306,19 @@ class CvTradeCitySelector:
 		return		
 		
 	#concat route id's in form (s1 d1 y1,s2 d2 y2...) and pass into popup for save
-	def saveGroupPopup(self):								
+	def saveGroupPopup(self):
 		idlist=[]
-		
-		for pRoute in self.CurrentList:
-			if self.AssignedRoutes[pRoute.getID()]:
-				idlist.append(str(pRoute.getSourceCity().iID) + " " + str(pRoute.getDestinationCity().iID) + " " + str(pRoute.getYield()))
+		for iCity, bAssigned in self.AssignedCities.iteritems():
+			if bAssigned:
+				idlist.append(str(iCity))
 
 		idstr =','.join(str(x) for x in idlist)		
 		popupInfo = CyPopupInfo()		
 		popupInfo.setText(idstr) 
 		
-		popupInfo.setButtonPopupType(ButtonPopupTypes.BUTTONPOPUP_SAVE_TRADEGROUP)
+		popupInfo.setButtonPopupType(ButtonPopupTypes.BUTTONPOPUP_SAVE_CITYGROUP)
 		CyInterface().addPopup(popupInfo, gc.getGame().getActivePlayer(), true, false)			
-		return	
+		return
 		
 	def deleteGroupTable(self):		
 		self.populateGroupTable(self.DELETE_GROUP_TABLE, localText.getText("TXT_KEY_HELP_DELETE_TRADE_GROUP", ()))
@@ -347,33 +326,28 @@ class CvTradeCitySelector:
 		
 	#Loads selected routes in trade group into the main trade screen
 	def loadSelectedGroup(self, iRow):		
-		for pRoute in self.CurrentList:			
-			self.AssignedRoutes[pRoute.getID()] = false
+		for iCity, bAssigned in self.AssignedCities.iteritems():
+			self.AssignedCities[iCity] = False
 			
 		tableCellValue = str(self.getScreen().getTableText(self.TableNames[self.CURRENT_TABLE], 1, iRow))
 		
 		routeTokens = tableCellValue.split(",")
 				
 		for token in routeTokens:
-			spl = token.split(" ")			
-			for pRoute in self.CurrentList:				
-				if str(pRoute.getSourceCity().iID) == spl[0] and str(pRoute.getDestinationCity().iID) == spl[1] and str(pRoute.getYield()) == spl[2]:								
-					self.AssignedRoutes[pRoute.getID()] = true		
+			for city in self.CityList:
+				if str(city.getID()) == token:
+					self.AssignedCities[city.getID()] = true
 		
-		self.routesTable(false)		
-		self.updateRoutes()
-		
-		
+		self.cityTable()
 		return
 		
 	#"deletes selected row"		
 	def deleteSelectedGroup(self, iRow):
 		tableCellValue = str(self.getScreen().getTableText(self.TableNames[self.CURRENT_TABLE], 0, iRow))
 		
-		self.player.removeTradeRouteGroup(int(tableCellValue))						
-		
-		self.routesTable(false)						
-		
+		self.player.removeCityGroup(int(tableCellValue))						
+							
+		self.cityTable()
 		return
 		
 	#R&R mod, vetiarvind, trade groups - end

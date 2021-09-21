@@ -45,6 +45,7 @@ enum SavegameClassTypes
 	SAVEGAME_CLASS_REPLAYMESSAGE,
 	SAVEGAME_CLASS_TEAM,
 	SAVEGAME_CLASS_TEAM_AI,
+	SAVEGAME_CLASS_CITYGROUP,
 
 	NUM_SAVEGAME_CLASS_TYPES,
 
@@ -235,6 +236,7 @@ public:
 	void Read(OrderData             & variable) { variable.read(*this); }
 	void Read(PlotExtraYield        & variable) { variable.read(*this); }
 	void Read(TradeData             & variable) { variable.read(*this); }
+	void Read(CvCityGroup           & variable);
 
 	int ConvertIndex(JITarrayTypes eType, int iIndex) const;
 	int GetXmlSize(JITarrayTypes eType) const;
@@ -474,6 +476,7 @@ public:
 	void Write(OrderData            &variable) { variable.write(*this); }
 	void Write(PlotExtraYield       &variable) { variable.write(*this); }
 	void Write(TradeData            &variable) { variable.write(*this); }
+	void Write(CvCityGroup          &variable);
 
 	// get the amount of bytes needed to save the variable in question
 	// also tells the savegame that a conversion table is needed

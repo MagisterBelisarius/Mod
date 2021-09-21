@@ -7,6 +7,7 @@
 #include "CyArea.h"
 #include "CyTradeRoute.h"
 #include "CyTradeRouteGroup.h"
+#include "CyCityGroup.h"
 //# include <boost/python/manage_new_object.hpp>
 //# include <boost/python/return_value_policy.hpp>
 //# include <boost/python/scope.hpp>
@@ -123,6 +124,12 @@ void CyPlayerPythonInterface2(python::class_<CyPlayer>& x)
 		.def("getNumTradeGroups", &CyPlayer::getNumTradeGroups, "int ()")
 		.def("getTradeGroup", &CyPlayer::getTradeGroup, python::return_value_policy<python::manage_new_object>(), "CyTradeRouteGroup* (int iIndex)")		
 		/* R&R mod, vetiarvind, trade groups - end */
+		.def("addCityGroup", &CyPlayer::addCityGroup, "int (const std::wstring groupName)")
+		.def("editCityGroup", &CyPlayer::editCityGroup, "bool (int iId, const std::wstring groupName)")
+		.def("removeCityGroup", &CyPlayer::removeCityGroup, "bool (int iId)")
+		.def("getNumCityGroups", &CyPlayer::getNumCityGroups, "int ()")
+		.def("getCityGroup", &CyPlayer::getCityGroup, python::return_value_policy<python::manage_new_object>(), "getCityGroup* (int iIndex)")		
+		
 		
 		
 		

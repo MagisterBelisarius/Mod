@@ -12,6 +12,7 @@
 #include "CvIdVector.h"
 #include "CvTalkingHeadMessage.h"
 #include "CvTradeRouteGroup.h" //R&R mod, vetiarvind, trade groups
+#include "CvCityGroup.h" //R&R mod, vetiarvind, trade groups
 
 class CvDiploParameters;
 class CvPlayerAI;
@@ -48,6 +49,7 @@ public:
 protected:
 	bool m_bDisableHuman;
 	CvIdVector<CvTradeRouteGroup> m_aTradeGroups; //R&R mod, vetiarvind, trade groups
+	CvIdVector<CvCityGroup> m_aCityGroups; 
 public:
 	// Dale - AoD: AI Autoplay END
 	// PatchMod: Achievements START
@@ -882,6 +884,15 @@ public:
 	CvTradeRouteGroup* getTradeRouteGroup(int iIndex) const;
 	int getNumTradeGroups() const;
 	// R&R mod, vetiarvind, trade groups - end
+
+	// city restricted auto transport - Belisarius
+	int addCityGroup(const std::wstring groupName);
+	bool editCityGroup(int iId, const std::wstring groupName);
+	bool removeCityGroup(int iId);
+	CvCityGroup* getCityGroupById(int cityGroupId) const;
+	CvCityGroup* getCityGroup(int iIndex) const;
+	int getNumCityGroups() const;
+	
 
 	void writeDesyncLog(FILE *f) const;
 
