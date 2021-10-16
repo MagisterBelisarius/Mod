@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# coding: latin-1
+
 ##############################################################################
 ## File: FaireWeather.py version 1.07
 ## Author: Rich Marinaccio / Revisions by TAC Team
@@ -32,9 +35,9 @@
 ##
 ## 1.0 - Ta Daaa!
 
-from CvPythonExtensions import *
-import CvUtil
-import CvMapGeneratorUtil 
+#from CvPythonExtensions import *
+#import CvUtil
+#import CvMapGeneratorUtil 
 
 from array import array
 from random import random,randint,seed
@@ -42,7 +45,7 @@ import math
 import sys
 import time
 
-localText = CyTranslator() #neu
+#localText = CyTranslator() #neu
 
 
 class MapConstants :
@@ -162,7 +165,7 @@ class MapConstants :
         #A lower value creates more rivers over the entire map.
         self.RiverThreshold = 2.0
         # Belisarius - Large Rivers
-        self.LargeRiverThreshold = 1.5
+        self.LargeRiverThreshold = 25.0
         
         #Degrees lattitude for the top and bottom of the map. This allows
         #for more specific climate zones
@@ -332,97 +335,32 @@ class MapConstants :
         #Androrc End
         # Belisarius - Large Rivers
         self.LARGE_RIVER = 9
+        self.LAKE = 10
 
         return
     
     def initInGameOptions(self):
-        gc = CyGlobalContext()
-        mmap = gc.getMap()
-
         # set city catchment radius
-        mmap.setCityCatchmentRadiusMapMaker(mmap.getCustomMapOption(mc.getMapOption("colony catchment radius")))
 
-        #Distance to Europe
-        selectionID = mmap.getCustomMapOption(self.getMapOption("distance"))
-        if selectionID == 0:
-            self.distanceToEurope = 3
-        elif selectionID == 2:
-            self.distanceToEurope = 6
-        elif selectionID == 3:
-            self.distanceToEurope = 8
-        
-        # TAC - Map scripts - koma13 - START
-        #Lattitudes
-        selectionID = mmap.getCustomMapOption(self.getMapOption("border north"))
-        if selectionID == 1:
-            self.topLattitude = 75
-        elif selectionID == 2:
-            self.topLattitude = 60
-        elif selectionID == 3:
-            self.topLattitude = 45
-        elif selectionID == 4:
-            self.topLattitude = 30
-        elif selectionID == 5:
-            self.topLattitude = 15
-        elif selectionID == 6:
-            self.topLattitude = 0
-        elif selectionID == 7:
-            self.topLattitude = -15
-        elif selectionID == 8:
-            self.topLattitude = -30
-        elif selectionID == 9:
-            self.topLattitude = -45
-        elif selectionID == 10:
-            self.topLattitude = -60
-        elif selectionID == 11:
-            self.topLattitude = -75
-        elif selectionID == 12:
-            self.topLattitude = -90
-        
-        selectionID = mmap.getCustomMapOption(self.getMapOption("border south"))
-        if selectionID == 0:
-            self.bottomLattitude = 90
-        elif selectionID == 1:
-            self.bottomLattitude = 75
-        elif selectionID == 2:
-            self.bottomLattitude = 60
-        elif selectionID == 3:
-            self.bottomLattitude = 45
-        elif selectionID == 4:
-            self.bottomLattitude = 30
-        elif selectionID == 5:
-            self.bottomLattitude = 15
-        elif selectionID == 6:
-            self.bottomLattitude = 0
-        elif selectionID == 7:
-            self.bottomLattitude = -15
-        elif selectionID == 8:
-            self.bottomLattitude = -30
-        elif selectionID == 9:
-            self.bottomLattitude = -45
-        elif selectionID == 10:
-            self.bottomLattitude = -60
-        elif selectionID == 11:
-            self.bottomLattitude = -75
-        ## TAC - Map scripts - koma13 - END
 
-        #Landforms
-        selectionID = mmap.getCustomMapOption(self.getMapOption("land allocation"))
-        if selectionID == 1:
-            self.hmMaxGrain = 8
-            self.hmNumberOfPlates = int(float(self.hmWidth * self.hmHeight) * 0.0030)
-            self.minSeedRange = 10
-            self.landPercent = 0.28
-            self.plateMapScale = 0.5
-            self.hmNoiseLevel = 1.5
+        self.distanceToEurope = 6
+        self.topLattitude = -90
+        self.bottomLattitude = 90
+
+
+        self.hmMaxGrain = 8
+        self.hmNumberOfPlates = int(float(self.hmWidth * self.hmHeight) * 0.0030)
+        self.minSeedRange = 10
+        self.landPercent = 0.28
+        self.plateMapScale = 0.5
+        self.hmNoiseLevel = 1.5
         #Regularity
-        selectionID = mmap.getCustomMapOption(self.getMapOption("regularity"))
-        if selectionID == 0:
-            self.plateGrowthChanceY = 0.22
-        elif selectionID == 1:
-            self.plateGrowthChanceY = 0.33
-        elif selectionID == 2:
-            self.plateGrowthChanceY = 0.55
+
+        #self.plateGrowthChanceY = 0.22
+        
+        self.plateGrowthChanceY = 0.33
+        
+        #self.plateGrowthChanceY = 0.55
         return
     
 mc = MapConstants()
@@ -431,56 +369,26 @@ class PythonRandom :
     def __init__(self):
         return
     def seed(self):
-        #Python randoms are not usable in network games.
-        if mc.UsePythonRandom:
-            self.usePR = True
-        else:
-            self.usePR = False
-        if self.usePR and CyGame().isNetworkMultiPlayer():
-            print "Detecting network game. Setting UsePythonRandom to False."
-            self.usePR = False
-        if self.usePR:
-            # Python 'long' has unlimited precision, while the random generator
-            # has 53 bits of precision, so I'm using a 53 bit integer to seed the map!
-            seed() #Start with system time
-            seedValue = randint(0,9007199254740991)
-            seed(seedValue)
-            print "Random seed (Using Python rands) for this map is %(s)20d" % {"s":seedValue}
+
+        # Python 'long' has unlimited precision, while the random generator
+        # has 53 bits of precision, so I'm using a 53 bit integer to seed the map!
+        seed() #Start with system time
+        seedValue = randint(0,9007199254740991)
+        seed(seedValue) #(seedValue)#3194276705487258L
+        print "Random seed (Using Python rands) for this map is %(s)20d" % {"s":seedValue}
+        self.seed = seedValue
             
 ##            seedValue = 5436076319370800
 ##            seed(seedValue)
 ##            print "Pre-set seed (Using Pyhon rands) for this map is %(s)20d" % {"s":seedValue}
-        else:
-            gc = CyGlobalContext()
-            self.mapRand = gc.getGame().getMapRand()
-            
-            seedValue = self.mapRand.get(65535,"Seeding mapRand - FairWeather.py")
-            self.mapRand.init(seedValue)
-            print "Random seed (Using getMapRand) for this map is %(s)20d" % {"s":seedValue}
-            
-##            seedValue = 56870
-##            self.mapRand.init(seedValue)
-##            print "Pre-set seed (Using getMapRand) for this map is %(s)20d" % {"s":seedValue}
         return
     def random(self):
-        if self.usePR:
-            return random()
-        else:
-            #This formula is identical to the getFloat function in CvRandom. It
-            #is not exposed to Python so I have to recreate it.
-            fResult = float(self.mapRand.get(65535,"Getting float -FairWeather.py"))/float(65535)
-#            print fResult
-            return fResult
+        return random()
     def randint(self,rMin,rMax):
         #if rMin and rMax are the same, then return the only option
         if rMin == rMax:
             return rMin
-        #returns a number between rMin and rMax inclusive
-        if self.usePR:
-            return randint(rMin,rMax)
-        else:
-            #mapRand.get() is not inclusive, so we must make it so
-            return rMin + self.mapRand.get(rMax + 1 - rMin,"Getting a randint - FairWeather.py")
+        return randint(rMin,rMax)
 #Set up random number system for global access
 PRand = PythonRandom()
 
@@ -681,9 +589,9 @@ def ShuffleList(theList):
                 del preshuffle[n]
         return shuffled
     
-def GetInfoType(string):
-	cgc = CyGlobalContext()
-	return cgc.getInfoTypeForString(string)
+# def GetInfoType(string):
+# 	cgc = CyGlobalContext()
+# 	return cgc.getInfoTypeForString(string)
     
 def GetDistance(x,y,dx,dy):
     distance = math.sqrt(abs((float(x - dx) * float(x - dx)) + (float(y - dy) * float(y - dy))))
@@ -1046,7 +954,7 @@ class HeightMap :
 
                     break
                 
-##        self.printPlateMap(self.plateMap)
+        self.printPlateMap(self.plateMap)
         
         #Now cause the seeds to grow into plates
         iterations = 0
@@ -1087,7 +995,7 @@ class HeightMap :
                 growthPlotList.append(plot)
             del growthPlotList[0]
                             
-##        self.printPlateMap(self.plateMap)
+        self.printPlateMap(self.plateMap)
         
         #Stagger the plates somewhat to add interest
         steps = int(mc.plateStaggerRange/mc.plateStagger)
@@ -1097,7 +1005,7 @@ class HeightMap :
             else:
                 preSmoothMap[i] = float(self.plateMap[i].plateID % steps) * mc.plateStagger
 
-##        self.printPreSmoothMap(preSmoothMap)
+        self.printPreSmoothMap(preSmoothMap)
 
         #Now smooth the plate height map and create the distance map at the same time
         #Since the algorithm is the same
@@ -1124,7 +1032,7 @@ class HeightMap :
                 avg = avg/float(contributers)
                 self.plateHeightMap[i] = avg
                 
-##        self.printPlateHeightMap()
+        self.printPlateHeightMap()
 #        self.printDistanceMap(distanceMap,maxDistance)
 
         #Now add ripple formula to plateHeightMap
@@ -1677,7 +1585,7 @@ class ClimateMap :
                     elif self.rainFallMap[i] < 0.00001:
                         lineString += 'X'
                     else:
-                        mapLoc = int(self.rainFallMap[i] * 10)
+                        mapLoc = int(self.rainFallMap[i] * 60)
                         lineString += chr(mapLoc + 48)
             z = wz.GetZone(y)
             dx,dy = wz.GetWindDirectionsInZone(z)
@@ -2026,14 +1934,14 @@ class SmallMaps :
                         self.terrainMap[i] = mc.GRASS
                     else:
                         if self.averageTempMap[i] > (PRand.random() * (mc.alwaysMarshTemp - mc.MinMarshTemp)) + mc.MinMarshTemp:
-							#ray Savannah
-							if PRand.random() <= 0.5:
-								self.terrainMap[i] = mc.MARSH
-							else:
-								self.terrainMap[i] = mc.SAVANNAH
-							#ray Savannah End
+                            #ray Savannah
+                            if PRand.random() <= 0.5:
+                                self.terrainMap[i] = mc.MARSH
+                            else:
+                                self.terrainMap[i] = mc.SAVANNAH
+                            #ray Savannah End
                         else:
-							self.terrainMap[i] = mc.GRASS
+                            self.terrainMap[i] = mc.GRASS
 
         #Make sure ice is always higher than tundra, and tundra is always higher than
         #everything else
@@ -2690,53 +2598,83 @@ class RiverMap :
         #nothing, object initializer must be empty
         return
     def generateRiverMap(self):
-        self.L = 0 #also denotes a 'pit' or 'flat'
         self.N = 1
         self.S = 2
         self.E = 3
         self.W = 4
-        self.NE = 5
-        self.NW = 6
-        self.SE = 7
-        self.SW = 8
-        self.O = 5 #used for ocean or land without a river
+        self.N2 = 5 # large river
+        self.S2 = 6 # large river
+        self.E2 = 7 # large river
+        self.W2 = 8 # large river
+        self.N3 = 9 # lake exit special location
+        self.S3 = 10# lake exit special location
+        self.E3 = 11# lake exit special location
+        self.W3 = 12# lake exit special location
+        self.L = 13 #also denotes a 'pit' or 'flat'
+        self.O = 14  #used for ocean or land without a river
+        
+        self.lakeExit     = -2
+        self.lakeToOcean  = -3
+        self.lakeSource   = 1
+        self.lakeSquare   = 2
+        self.lakeExitFrom = 4
+        
+        
 
         #averageHeightMap, flowMap, averageRainfallMap and drainageMap are offset from the other maps such that
         #each element coincides with a four tile intersection on the game map
         self.averageHeightMap = array('d')
         self.flowMap = array('i')
-        self.averageRainfallMap = array('d')        
+        self.flowMap2 = array('i')
+        self.flowMap3 = array('i')
+        self.averageRainfallMap = array('d')
         self.drainageMap = array('d')
         self.riverMap = array('i')
+        self.lakeMap = array('i')
+        self.lakeIDs = array('i')
+        self.drainageLakeIDs = array('i')
+        
+        self.lakeExitXYs = {}
+        
+        lakeID = 1
         #initialize maps with zeros
         for i in range(0,mc.height*mc.width):
             self.averageHeightMap.append(0.0)
             self.flowMap.append(0)
+            self.flowMap2.append(0)
             self.averageRainfallMap.append(0.0)
             self.drainageMap.append(0.0)
             self.riverMap.append(self.O)
+            self.lakeMap.append(-1)
+            self.lakeIDs.append(-1)
+            self.drainageLakeIDs.append(-1)
+            
         #Get highest intersection neighbor
         for y in range(mc.height):
             for x in range(mc.width):
                 i = GetIndex(x,y)
-                maxHeight = 0.0;
+                heightSum = 0.0
                 for yy in range(y,y-2,-1):
                     for xx in range(x,x+2):
                         ii = GetIndex(xx,yy)
                         #use an average hight of <0 to denote an ocean border
                         #this will save processing time later
                         if(sm.plotMap[ii] == mc.OCEAN):
-                            maxHeight = -100.0
-                        elif maxHeight < sm.heightMap[ii] and maxHeight >= 0:
-                            maxHeight = sm.heightMap[ii]
-                self.averageHeightMap[i] = maxHeight
-        #create flowMap by checking for the lowest of each 4 connected
-        #neighbor plus self       
+                            heightSum = -100.0
+                        elif heightSum >= 0:
+                            heightSum += sm.heightMap[ii]
+                self.averageHeightMap[i] = heightSum
+                if sm.plotMap[i] != mc.OCEAN:
+                    self.lakeMap[i] = 0
+                    self.lakeIDs[i] = 0
+                    self.drainageLakeIDs[i] = 0
+        
+        #create flowMap pass 1 (no lakes or large rivers pass)
         for y in range(mc.height):
             for x in range(mc.width):
                 i = GetIndex(x,y)
                 lowestAlt = self.averageHeightMap[i]
-                if(lowestAlt < 0.0):
+                if (lowestAlt < 0.0):
                     #if height is <0 then that means this intersection is
                     #adjacent to an ocean and has no flow
                     self.flowMap[i] = self.O
@@ -2746,25 +2684,193 @@ class RiverMap :
                     #randomly chosen as the drainage path
                     drainList = list()
                     self.flowMap[i] = self.L 
-                    ii = GetIndex(x,y+1)
-                    #in the y direction, avoid wrapping
-                    if(y > 0 and self.averageHeightMap[ii] < lowestAlt):
+                    
+                    # North?
+                    alts = [sm.heightMap[GetIndex(x,y+1)], # downstream
+                            sm.heightMap[GetIndex(x,y)], # river square
+                            sm.heightMap[GetIndex(x,y-1)]] # upstream
+                    if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
                         drainList.append(self.N)
-                    ii = GetIndex(x,y-1)
-                    if(y < mc.height - 1 and self.averageHeightMap[ii] < lowestAlt):
+                    
+                    # south?
+                    alts = [sm.heightMap[GetIndex(x,y-2)], # downstream
+                            sm.heightMap[GetIndex(x,y-1)], # river square
+                            sm.heightMap[GetIndex(x,y)]] # upstream
+                    if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
                         drainList.append(self.S)
-                    ii = GetIndex(x-1,y)
-                    if(self.averageHeightMap[ii] < lowestAlt):
+                    
+                    # west?
+                    alts = [sm.heightMap[GetIndex(x-1,y)], # downstream
+                            sm.heightMap[GetIndex(x,y)], # river square
+                            sm.heightMap[GetIndex(x+1,y)]] # upstream
+                    if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
                         drainList.append(self.W)
-                    ii = GetIndex(x+1,y)
-                    if(self.averageHeightMap[ii] < lowestAlt):
+                    
+                    # east?
+                    alts = [sm.heightMap[GetIndex(x+2,y)], # downstream
+                            sm.heightMap[GetIndex(x+1,y)], # river square
+                            sm.heightMap[GetIndex(x,y)]] # upstream
+                    if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
                         drainList.append(self.E)
+                    
                     count = len(drainList)
                     if count > 0:
                         choice = int(PRand.random()*count)
-#                        print count,choice
                         self.flowMap[i] = drainList[choice]
-                  
+        
+        # find lake bottoms and naive fill them
+        lakeID = 1
+        self.lakes = {}
+        for y in range(mc.height):
+            for x in range(mc.width):
+                if(sm.plotMap[GetIndex(x,y)] == mc.OCEAN):
+                    continue
+                alts = [sm.heightMap[GetIndex(x,y)],
+                        sm.heightMap[GetIndex(x,y+1)],
+                        sm.heightMap[GetIndex(x,y-1)],
+                        sm.heightMap[GetIndex(x+1,y)],
+                        sm.heightMap[GetIndex(x-1,y)]]
+                if min(alts) == alts[0]:
+                    # pit square found
+                    lakeRecord = self.createAndFillLake(x, y, lakeID)
+                    if lakeRecord is not None:
+                        print("Lake %i was created successfully." %(lakeID))
+                        self.lakes[lakeID] = lakeRecord
+                        lakeID +=1
+
+        
+        # find flow dead-ends and check if there is a lake
+        print("")
+        print("#################################")
+        print("Finding additional lake locations")
+        print("#################################")
+        print("")
+        for y in range(mc.height):
+            for x in range(mc.width):
+                i = GetIndex(x,y)
+                # ignore ocean neighbor locations
+                if self.averageHeightMap[i]<0:
+                    continue
+                lakePresent = False
+                best_y = 0
+                best_x = 0
+                best_now = 9000000
+                for yy in range(y,y-2,-1):
+                    for xx in range(x,x+2):
+                        ii = GetIndex(xx,yy)
+                        if sm.heightMap[ii] < best_now:
+                            best_now = sm.heightMap[ii]
+                            best_x = xx
+                            best_y = yy
+                        if(self.lakeIDs[ii] > 0):
+                            lakePresent = True
+                if self.flowMap[i] == self.L and not lakePresent:
+                    print("")
+                    print("Flow end but no lake nearby at %i %i" % (x,y))
+                    lakeRecord = self.createAndFillLake(best_x, best_y, lakeID)
+                    if lakeRecord is not None:
+                        print("Lake %i was created successfully." %(lakeID))
+                        self.lakes[lakeID] = lakeRecord
+                        lakeID +=1
+        
+        # lakes done, check their exit flows
+        for k,v in self.lakes.items():
+            x = v.exitFromX
+            y = v.exitFromY
+            
+            print("Checking lake %i exit validity" % (k))
+            exits = self.checkLakeExit(x,y)
+            if len(exits) == 0:
+                print("Fixing the exit...")
+                self.fixExitOfExistingLake(v)
+            else:
+                count = len(exits)
+                choice = int(PRand.random()*count)
+                i = GetIndex(exits[choice][0], exits[choice][1])
+                self.flowMap2[i] = exits[choice][2]
+                v.exitRiverX = exits[choice][0]
+                v.exitRiverY = exits[choice][1]
+                
+        # fill the new oceans and link lakes to drainage intersections
+        # in addition, place lakes in terrain map
+        for y in range(mc.height):
+            for x in range(mc.width):
+                i = GetIndex(x,y)
+                if self.lakeMap[i] == self.lakeToOcean:
+                    sm.plotMap[i] = mc.OCEAN
+                    sm.terrainMap[i] = mc.OCEAN
+                    for yy in range(y,y+2):
+                        for xx in range(x,x-2,-1):
+                            ii = GetIndex(xx,yy)
+                            #use an average hight of <0 to denote an ocean border
+                            #this will save processing time later
+                            self.averageHeightMap[ii] = -100.0
+                lakeID = self.lakeIDs[i]
+                if lakeID > 0:
+                    sm.terrainMap[i] = mc.LAKE
+                    for yy in range(y,y+2):
+                        for xx in range(x,x-2,-1):
+                            ii = GetIndex(xx,yy)
+                            self.drainageLakeIDs[ii] = lakeID
+                
+        
+        #create flowMap pass 2 (lakes exist pass)
+        for y in range(mc.height):
+            for x in range(mc.width):
+                i = GetIndex(x,y)
+                lowestAlt = self.averageHeightMap[i]
+                if (lowestAlt < 0.0):
+                    #if height is <0 then that means this intersection is
+                    #adjacent to an ocean and has no flow
+                    self.flowMap2[i] = self.O
+                else:
+                    # handle existing values (lake exits) - keep them
+                    if self.flowMap2[i] != 0:
+                        continue
+                    #First assume this place is lowest, like a 'pit'. Then
+                    #for each place that is lower, add it to a list to be
+                    #randomly chosen as the drainage path
+                    drainList = list()
+                    self.flowMap2[i] = self.L
+                    
+                    # North?
+                    alts = [sm.heightMap[GetIndex(x,y+1)], # downstream
+                            sm.heightMap[GetIndex(x,y)], # river square
+                            sm.heightMap[GetIndex(x,y-1)]] # upstream
+                    if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                        if not (self.lakeIDs[GetIndex(x,y)] or self.lakeIDs[GetIndex(x+1,y)]):
+                            drainList.append(self.N)
+                    
+                    # south?
+                    alts = [sm.heightMap[GetIndex(x,y-2)], # downstream
+                            sm.heightMap[GetIndex(x,y-1)], # river square
+                            sm.heightMap[GetIndex(x,y)]] # upstream
+                    if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                        if not (self.lakeIDs[GetIndex(x,y-1)] or self.lakeIDs[GetIndex(x+1,y-1)]):
+                            drainList.append(self.S)
+                    
+                    # west?
+                    alts = [sm.heightMap[GetIndex(x-1,y)], # downstream
+                            sm.heightMap[GetIndex(x,y)], # river square
+                            sm.heightMap[GetIndex(x+1,y)]] # upstream
+                    if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                        if not (self.lakeIDs[GetIndex(x,y)] or self.lakeIDs[GetIndex(x,y-1)]):
+                            drainList.append(self.W)
+                    
+                    # east?
+                    alts = [sm.heightMap[GetIndex(x+2,y)], # downstream
+                            sm.heightMap[GetIndex(x+1,y)], # river square
+                            sm.heightMap[GetIndex(x,y)]] # upstream
+                    if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                        if not (self.lakeIDs[GetIndex(x+1,y)] or self.lakeIDs[GetIndex(x+1,y-1)]):
+                            drainList.append(self.E)
+                    
+                    count = len(drainList)
+                    if count > 0:
+                        choice = int(PRand.random()*count)
+                        self.flowMap2[i] = drainList[choice]
+                        
+        #print(1/0)
         #Create average rainfall map so that each intersection is an average
         #of the rainfall from rm.rainMap
         for y in range(mc.height):
@@ -2777,18 +2883,28 @@ class RiverMap :
                         avg += sm.rainFallMap[ii]
                 avg = avg/4.0
                 self.averageRainfallMap[i] = avg
-               
+                
+        # cleanup copy flowmap3
+        for i in self.flowMap2:
+            if i >= self.N3 and i <= self.W3:
+                self.flowMap3.append(i-8)
+            else:
+                self.flowMap3.append(i)
+                
         #Now use the flowMap as a guide to distribute average rainfall.
         #Wherever the most rainfall ends up is where the rivers will be.
         print "Distributing rainfall"
         for y in range(mc.height):
             for x in range(mc.width):
                 i = GetIndex(x,y)
-                flow = self.flowMap[i]
+                flow = self.flowMap3[i]
                 rainFall = self.averageRainfallMap[i]
                 xx = x
                 yy = y
-                while(flow != self.L and flow != self.O):
+                iteration = 0
+                while(flow != self.O):
+                    iteration += 1
+                    
                     if(flow == self.N):
                         yy += 1
                     elif(flow == self.S):
@@ -2796,6 +2912,14 @@ class RiverMap :
                     elif(flow == self.W):
                         xx -= 1
                     elif(flow == self.E):
+                        xx += 1
+                    if(flow == self.N3):
+                        yy += 1
+                    elif(flow == self.S3):
+                        yy -= 1
+                    elif(flow == self.W3):
+                        xx -= 1
+                    elif(flow == self.E3):
                         xx += 1
                     #wrap
                     if(xx < 0):
@@ -2806,11 +2930,22 @@ class RiverMap :
                         yy = mc.height - 1
                     elif(yy >= mc.height):
                         yy = 0
-                    #dump rainfall here
+                    # dump rainfall here
                     ii = GetIndex(xx,yy)
                     self.drainageMap[ii] += rainFall
-                    #reset flow
-                    flow = self.flowMap[ii]
+                    # flow next step location: lake "teleports" to its exit
+                    if flow == self.L:
+                        lakeID = self.drainageLakeIDs[ii]
+                        xx = self.lakes[lakeID].exitRiverX
+                        yy = self.lakes[lakeID].exitRiverY
+                        ii = GetIndex(xx,yy)
+                        self.drainageMap[ii] += rainFall
+                    
+                    flow = self.flowMap3[ii]
+                    
+                    if iteration > 200:
+                        print("Potential infinite loop broken!")
+                        break
                     
         #Normalize drainageMap to between 0.0 and 1.0            
 #        NormalizeMap(hm.mapWidth,hm.mapHeight,self.drainageMap)
@@ -2819,14 +2954,317 @@ class RiverMap :
         # Belisarius - Large Rivers
         largeRiverThreshold = sm.plainsThreshold * mc.LargeRiverThreshold
         for i in range(mc.height*mc.width):
-            if(self.drainageMap[i] > riverThreshold):
+            if(self.drainageMap[i] > largeRiverThreshold):
+                if self.flowMap3[i] >= self.N and self.flowMap3[i] <= self.W:
+                    self.riverMap[i] = self.flowMap3[i] + 4
+                else:
+                    self.riverMap[i] = self.flowMap3[i]
+            elif(self.drainageMap[i] > riverThreshold):
 ##                    riverCount += 1
-                self.riverMap[i] = self.flowMap[i]
+                self.riverMap[i] = self.flowMap3[i]
             else:
                 self.riverMap[i] = self.O
 
         #at this point river should be in tolerance or close to it
         #riverMap is ready for use
+    class LakeRecord:
+        def __init__(self, lakeIs, borderIs, borderXs, borderYs, borderHs, waterH, exitX, exitY, exitFromX, exitFromY, exitRiverX, exitRiverY, ID):
+            self.lakeIs = lakeIs
+            self.borderIs = borderIs
+            self.borderXs = borderXs
+            self.borderYs = borderYs
+            self.borderHs = borderHs
+            self.waterH = waterH
+            self.exitX = exitX # estimated outflow plot location (not lake square)
+            self.exitY = exitY
+            self.exitFromX = exitFromX # plot that the lake flows out from
+            self.exitFromY = exitFromY
+            self.exitRiverX = exitRiverX
+            self.exitRiverY = exitRiverY
+            self.ID = ID
+        
+        # join another lake to this lake, this being the master lake afterwards
+        def joinLake(self, new_lake, x, y):
+            # simple add together operation
+            self.lakeIs = self.lakeIs | new_lake.lakeIs
+            self.borderIs = self.borderIs | new_lake.borderIs
+            
+            # lake borders can be shared!
+            # thus, duplicates must be removed
+            for new in range(0,len(new_lake.borderHs)):
+                found = False
+                for old in range(0,len(self.borderHs)):
+                    if new_lake.borderXs[new] == self.borderXs[old] and new_lake.borderYs[new] == self.borderYs[old]:
+                        found = True
+                if not found:
+                    self.borderHs.append(new_lake.borderHs[new])
+                    self.borderXs.append(new_lake.borderXs[new])
+                    self.borderYs.append(new_lake.borderYs[new])
+            
+            # remove the joining lake plot from the master lake's border
+            for i in range(0,len(self.borderHs)):
+                if self.borderXs[i] == x and self.borderYs[i] == y:
+                    del self.borderHs[i]
+                    del self.borderXs[i]
+                    del self.borderYs[i]
+                    break
+            
+            self.waterH = min(self.waterH,new_lake.waterH)
+            
+        def getLowestBorder(self):
+            idx = self.borderHs.index(min(self.borderHs))
+            height = self.borderHs[idx]
+            x = self.borderXs[idx]
+            y = self.borderYs[idx]
+            return (height,x,y,idx)
+        
+        def deleteBorder(self, idx):
+            del self.borderHs[idx]
+            del self.borderXs[idx]
+            del self.borderYs[idx]
+        
+        def addBorder(self, height, x, y, i):
+            self.borderHs.append(height)
+            self.borderXs.append(x)
+            self.borderYs.append(y)
+            self.borderIs.add(i)
+    
+    def checkLakeExit(self,x,y):
+        exits = []
+        #-- check the four flow corners around --
+        # bottom right corner
+        cx = 0; cy = 0
+        # south
+        if self.lakeMap[GetIndex(x+cx, y+cy-1)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy-1)] <= 0:
+            alts = [sm.heightMap[GetIndex(x+cx, y+cy-2)], # downstream
+                    sm.heightMap[GetIndex(x+cx, y+cy-1)], # river square
+                    sm.heightMap[GetIndex(x+cx, y+cy)]] # upstream
+            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                exits.append((x+cx, y+cy, self.S3))
+        # east
+        if self.lakeMap[GetIndex(x+cx+1, y+cy-1)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy)] <= 0:
+            alts = [sm.heightMap[GetIndex(x+cx+2, y+cy)], # downstream
+                    sm.heightMap[GetIndex(x+cx+1, y+cy)], # river square
+                    sm.heightMap[GetIndex(x+cx,   y+cy)]] # upstream
+            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                exits.append((x+cx, y+cy, self.E3))
+        
+        # bottom left corner
+        cx = -1; cy = 0
+        # south
+        if self.lakeMap[GetIndex(x+cx, y+cy-1)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy-1)] <= 0:
+            alts = [sm.heightMap[GetIndex(x+cx, y+cy-2)], # downstream
+                    sm.heightMap[GetIndex(x+cx, y+cy-1)], # river square
+                    sm.heightMap[GetIndex(x+cx, y+cy)]] # upstream
+            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                exits.append((x+cx, y+cy, self.S3))
+        # west
+        if self.lakeMap[GetIndex(x+cx, y+cy)] <= 0 and self.lakeMap[GetIndex(x+cx, y+cy-1)] <= 0:
+            alts = [sm.heightMap[GetIndex(x+cx-1, y+cy)], # downstream
+                    sm.heightMap[GetIndex(x+cx,   y+cy)], # river square
+                    sm.heightMap[GetIndex(x+cx+1, y+cy)]] # upstream
+            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                exits.append((x+cx, y+cy, self.W3))
+        
+        # top left corner
+        cx = -1; cy = 1
+        # west
+        if self.lakeMap[GetIndex(x+cx, y+cy)] <= 0 and self.lakeMap[GetIndex(x+cx, y+cy-1)] <= 0:
+            alts = [sm.heightMap[GetIndex(x+cx-1, y+cy)], # downstream
+                    sm.heightMap[GetIndex(x+cx,   y+cy)], # river square
+                    sm.heightMap[GetIndex(x+cx+1, y+cy)]] # upstream
+            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                exits.append((x+cx, y+cy, self.W3))
+        # north
+        if self.lakeMap[GetIndex(x+cx, y+cy)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy)] <= 0:
+            alts = [sm.heightMap[GetIndex(x+cx, y+cy+1)], # downstream
+                    sm.heightMap[GetIndex(x+cx, y+cy)], # river square
+                    sm.heightMap[GetIndex(x+cx, y+cy-1)]] # upstream
+            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                exits.append((x+cx, y+cy, self.N3))
+        
+        # top right corner
+        cx = 0; cy = 1
+        # east
+        if self.lakeMap[GetIndex(x+cx+1, y+cy-1)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy)] <= 0:
+            alts = [sm.heightMap[GetIndex(x+cx+2, y+cy)], # downstream
+                    sm.heightMap[GetIndex(x+cx+1, y+cy)], # river square
+                    sm.heightMap[GetIndex(x+cx,   y+cy)]] # upstream
+            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                exits.append((x+cx, y+cy, self.E3))
+        # north
+        if self.lakeMap[GetIndex(x+cx, y+cy)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy)] <= 0:
+            alts = [sm.heightMap[GetIndex(x+cx, y+cy+1)], # downstream
+                    sm.heightMap[GetIndex(x+cx, y+cy)], # river square
+                    sm.heightMap[GetIndex(x+cx, y+cy-1)]] # upstream
+            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                exits.append((x+cx, y+cy, self.N3))
+        if len(exits) > 0:
+            print("Exit validated: %i found" % (len(exits)))
+            return exits
+        else:
+            print("No exit found!!!!")
+            return exits
+        
+    def createAndFillLake(self,x,y, lakeID):
+        print("")
+        print("Starting lake filling at %i %i" % (x,y))
+        i = GetIndex(x,y)
+        k = self.LakeRecord({i},{i},[x],[y],[sm.heightMap[i]],sm.heightMap[i],-1,-1,-1,-1,-1,-1,lakeID)
+        
+        if not self.lakeIDs[i] == 0:
+            print("Lake already under another lake")
+            return None
+        self.lakeMap[i] = self.lakeSource
+        self.lakeIDs[i] = k.ID
+        
+        return self.fillExistingLake(k)
+    
+    def fillExistingLake(self,k):
+        while True:
+            # looking for the lowest border location
+            (height,x,y,idx)=k.getLowestBorder()
+            ii = GetIndex(x,y)
+            
+            if height < k.waterH:
+                # drainage pathway found! Lake finished
+                print("Drainage found at %i %i: %i" % (x,y, ii))
+                self.lakeMap[ii] = self.lakeExit
+                k.exitX = x
+                k.exitY = y
+                # find the lake square to exit from
+                found = False
+                for s in k.lakeIs:
+                    if s == GetIndex(x+1,y): k.exitFromX = x+1; k.exitFromY = y; found = True
+                    if s == GetIndex(x-1,y): k.exitFromX = x-1; k.exitFromY = y; found = True
+                    if s == GetIndex(x,y+1): k.exitFromX = x; k.exitFromY = y+1; found = True
+                    if s == GetIndex(x,y-1): k.exitFromX = x; k.exitFromY = y-1; found = True
+                if not found:
+                    print("###Unable to find the lake square to exit from!###")
+                else:
+                    self.lakeMap[GetIndex(k.exitFromX,k.exitFromY)] = self.lakeExitFrom
+                return k
+            else:
+                print("filling with water at %i %i: %i" % (x,y, ii))
+                # fill with water the lowest lake border square
+                k.lakeIs.add(ii)
+                k.waterH = height
+                k.deleteBorder(idx)
+                
+                self.lakeMap[ii] = self.lakeSquare
+                self.lakeIDs[ii] = k.ID
+            
+            newID = 0
+            # adding new borders to the list
+            xs=[ 0, 0,-1, 1]
+            ys=[-1, 1, 0, 0]
+            for j in range(0,4):
+                ii = GetIndex(x+xs[j],y+ys[j])
+                if(ii not in k.borderIs):
+                    if self.lakeIDs[ii] == 0:
+                        k.addBorder(sm.heightMap[ii],x+xs[j],y+ys[j],ii)
+                    else:
+                        # existing lake hit!
+                        newID = self.lakeIDs[ii]
+            
+            if newID !=0:
+                # join an existing lake
+                print("Joining lake %i" %(newID))
+                for n in k.lakeIs:
+                    self.lakeIDs[n] = newID
+                if not newID == -1:
+                    k2 = self.lakes[newID]
+                    k2.joinLake(k,x,y)
+                    
+                    # joined at the exit plot! New must be found
+                    if k2.exitX == x and k2.exitY == y:
+                        print("Exit was overwritten, must find a new one for the compound lake.")
+                        self.lakeMap[GetIndex(x,y)] = self.lakeSquare
+                        self.lakeMap[GetIndex(k2.exitFromX,k2.exitFromY)] = self.lakeSquare
+                        self.fillExistingLake(k2)
+                else:
+                    print("Lake hit the ocean and is integrated into it.")
+                    for n in k.lakeIs:
+                        self.lakeMap[n] = self.lakeToOcean
+                    
+                        
+                return None
+            
+        return k
+    
+    def fixExitOfExistingLake(self,k):
+        while True:
+            # looking for the lowest border location
+            (height,x,y,idx)=k.getLowestBorder()
+            i = GetIndex(x,y)
+            
+            print("filling with water at %i %i: %i" % (x,y, i))
+            # fill with water the lowest lake border square
+            k.lakeIs.add(i)
+            k.waterH = height
+            k.deleteBorder(idx)
+            
+            self.lakeMap[i] = self.lakeSquare
+            self.lakeMap[GetIndex(k.exitFromX,k.exitFromY)] = self.lakeSquare
+            
+            newID = 0
+            # adding new borders to the list
+            xs=[ 0, 0,-1, 1]
+            ys=[-1, 1, 0, 0]
+            for j in range(0,4):
+                ii = GetIndex(x+xs[j],y+ys[j])
+                if(ii not in k.borderIs):
+                    if self.lakeIDs[ii] == 0:
+                        k.addBorder(sm.heightMap[ii],x+xs[j],y+ys[j],ii)
+                    else:
+                        # existing lake hit!
+                        newID = self.lakeIDs[ii]
+            
+            if newID !=0:
+                # join an existing lake
+                print("Joining lake %i" %(newID))
+                for n in k.lakeIs:
+                    self.lakeIDs[n] = newID
+                if not newID == -1:
+                    k2 = self.lakes[newID]
+                    k2.joinLake(k,x,y)
+                    
+                    # joined at the exit plot! New must be found
+                    if k2.exitX == x and k2.exitY == y:
+                        print("Exit was overwritten, must find a new one for the compound lake.")
+                        self.lakeMap[GetIndex(x,y)] = self.lakeSquare
+                        self.lakeMap[GetIndex(k2.exitFromX,k2.exitFromY)] = self.lakeSquare
+                        self.fillExistingLake(k2)
+                else:
+                    print("Lake hit the ocean and is integrated into it.")
+                    for n in k.lakeIs:
+                        self.lakeMap[n] = self.lakeToOcean
+                    
+                        
+                return None
+            
+            self.lakeIDs[i] = k.ID
+            
+            exits = self.checkLakeExit(x, y)
+            if len(exits)>0:
+                # drainage pathway found! Lake finished
+                print("Drainage found at %i %i: %i" % (x,y, i))
+                self.lakeMap[i] = self.lakeExit
+                k.exitX = x
+                k.exitY = y
+                k.exitFromX = x
+                k.exitFromY = y
+                self.lakeMap[GetIndex(k.exitFromX,k.exitFromY)] = self.lakeExitFrom
+                
+                count = len(exits)
+                choice = int(PRand.random()*count)
+                i = GetIndex(exits[choice][0], exits[choice][1])
+                self.flowMap2[i] = exits[choice][2]
+                k.exitRiverX = exits[choice][0]
+                k.exitRiverY = exits[choice][1]
+                return k
+            
+        return k
 
     def rxFromPlot(self,x,y,direction):
         if direction == self.NE:
@@ -2856,18 +3294,78 @@ class RiverMap :
                     lineString += 'E'
                 elif mapLoc == self.W:
                     lineString += 'W'
+                elif mapLoc == self.N2:
+                    lineString += '|'
+                elif mapLoc == self.S2:
+                    lineString += '!'
+                elif mapLoc == self.E2:
+                    lineString += '='
+                elif mapLoc == self.W2:
+                    lineString += '-'
+                else:
+                    lineString += '#'
             lineString += "-" + wz.GetZoneName(wz.GetZone(y))
             print lineString
         lineString = " "
         print lineString
-            
-    def printFlowMap(self):
+    
+    def printLakeMap(self):
+        print "Lake Map"
+        wz = WindZones(mc.height,80,-80)
+        for y in range(mc.height - 1,-1,-1):
+            lineString = ""
+            for x in range(mc.width):
+                mapLoc = self.lakeMap[GetIndex(x,y)]
+                if mapLoc == -1:
+                    lineString += '.'
+                elif mapLoc == 0:
+                    lineString += ':'
+                elif mapLoc == self.lakeSource:
+                    lineString += '^'
+                elif mapLoc == self.lakeSquare:
+                    lineString += 'o'
+                elif mapLoc == self.lakeExit:
+                    lineString += '~'
+                elif mapLoc == self.lakeExitFrom:
+                    lineString += 'u'
+                elif mapLoc == self.lakeToOcean:
+                    lineString += ','
+                else:
+                    lineString += '#'
+            lineString += "-" + wz.GetZoneName(wz.GetZone(y))
+            print lineString
+        lineString = " "
+        print lineString
+        
+    def printLakeIDMap(self):
+        print "Lake ID Map"
+        wz = WindZones(mc.height,80,-80)
+        for y in range(mc.height - 1,-1,-1):
+            lineString = ""
+            for x in range(mc.width):
+                mapLoc = self.lakeIDs[GetIndex(x,y)]
+                if mapLoc == -1:
+                    lineString += '.'
+                elif mapLoc == 0:
+                    lineString += ':'
+                else:
+                    lineString += "\x1b[38;5;14m" + chr(mapLoc + 48) + "\x1b[0m"
+            lineString += "-" + wz.GetZoneName(wz.GetZone(y))
+            print lineString
+        lineString = " "
+        print lineString
+        
+    def printFlowMap(self, stage = 1):
+        if stage == 2:
+            flowData = self.flowMap2
+        else:
+            flowData = self.flowMap
         print "Flow Map"
         wz = WindZones(mc.height,80,-80)
         for y in range(mc.height - 1,-1,-1):
             lineString = ""
             for x in range(mc.width):
-                mapLoc = self.flowMap[GetIndex(x,y)]
+                mapLoc = flowData[GetIndex(x,y)]
                 if mapLoc == self.O:
                     lineString += '.'
                 elif mapLoc == self.L:
@@ -2880,10 +3378,74 @@ class RiverMap :
                     lineString += 'E'
                 elif mapLoc == self.W:
                     lineString += 'W'
+                elif mapLoc == self.N3:
+                    lineString += 'N'
+                elif mapLoc == self.S3:
+                    lineString += 'S'
+                elif mapLoc == self.E3:
+                    lineString += 'E'
+                elif mapLoc == self.W3:
+                    lineString += 'W'
             lineString += "-" + wz.GetZoneName(wz.GetZone(y))
             print lineString
         lineString = " "
         print lineString
+    def printFlowAndLakesAlign(self, stage = 1):
+        if stage == 2:
+            flowData = self.flowMap2
+        else:
+            flowData = self.flowMap
+        print "Lake Flow Check"
+        for y in range(mc.height - 1,-1,-1):
+            lineString1 = ""
+            lineString2 = ""
+            for x in range(mc.width):
+                mapLoc = self.lakeMap[GetIndex(x,y)]
+                if mapLoc == -1:
+                    lineString1 += '..'
+                elif mapLoc == 0:
+                    lineString1 += "\x1b[38;5;10m" ':.' + "\x1b[0m"
+                elif mapLoc == self.lakeSource:
+                    lineString1 += "\x1b[38;5;4m" 'S.' + "\x1b[0m"
+                elif mapLoc == self.lakeSquare:
+                    lineString1 += "\x1b[38;5;12m" '#.' + "\x1b[0m"
+                elif mapLoc == self.lakeExit:
+                    lineString1 += "\x1b[38;5;6m" '~.' + "\x1b[0m"
+                elif mapLoc == self.lakeExitFrom:
+                    lineString1 += "\x1b[38;5;12m" 'u.' + "\x1b[0m"
+                elif mapLoc == self.lakeToOcean:
+                    lineString1 += "\x1b[38;5;6m" ',.' + "\x1b[0m"
+                else:
+                    lineString1 += '!.'
+                mapLoc = flowData[GetIndex(x,y)]
+                if mapLoc == self.O:
+                    lineString2 += '..'
+                elif mapLoc == self.L:
+                    lineString2 += "\x1b[38;5;3m" '.o' + "\x1b[0m"
+                elif mapLoc == self.N:
+                    lineString2 += "\x1b[38;5;14m" + '.^' + "\x1b[0m"
+                elif mapLoc == self.S:
+                    lineString2 += "\x1b[38;5;14m" + '.v' + "\x1b[0m"
+                elif mapLoc == self.E:
+                    lineString2 += "\x1b[38;5;14m" + '.>' + "\x1b[0m"
+                elif mapLoc == self.W:
+                    lineString2 += "\x1b[38;5;14m" + '.<' + "\x1b[0m"
+                elif mapLoc == self.N3:
+                    lineString2 += "\x1b[38;5;11m" + '.^' + "\x1b[0m"
+                elif mapLoc == self.S3:
+                    lineString2 += "\x1b[38;5;11m" + '.v' + "\x1b[0m"
+                elif mapLoc == self.E3:
+                    lineString2 += "\x1b[38;5;11m" + '.>' + "\x1b[0m"
+                elif mapLoc == self.W3:
+                    lineString2 += "\x1b[38;5;11m" + '.<' + "\x1b[0m"
+                else:
+                    lineString2 += '.#'
+##            lineString1 += "-" + wz.GetZoneName(wz.GetZone(y))
+##            lineString2 += "-" + wz.GetZoneName(wz.GetZone(y))
+            print lineString1
+            print lineString2
+        lineString1 = " "
+        print lineString1
     def printRiverAndTerrainAlign(self):
         print "River Alignment Check"
         for y in range(mc.height - 1,-1,-1):
@@ -2892,34 +3454,50 @@ class RiverMap :
             for x in range(mc.width):
                 mapLoc = sm.terrainMap[GetIndex(x,y)]
                 if mapLoc == mc.OCEAN:
-                    lineString1 += ',.'
+                    lineString1 += "\x1b[38;5;4m" + ',.' + "\x1b[0m"
                 elif mapLoc == mc.COAST:
-                    lineString1 += ',.'
+                    lineString1 += "\x1b[38;5;4m" + ',.' + "\x1b[0m"
                 elif mapLoc == mc.DESERT:
-                    lineString1 += 'D.'
+                    lineString1 += "\x1b[38;5;10m" + 'D.' + "\x1b[0m"
                 elif mapLoc == mc.GRASS:
-                    lineString1 += 'R.'
+                    lineString1 += "\x1b[38;5;10m" + 'R.' + "\x1b[0m"
                 elif mapLoc == mc.PLAINS:
-                    lineString1 += 'P.'
+                    lineString1 += "\x1b[38;5;10m" + 'P.' + "\x1b[0m"
                 elif mapLoc == mc.TUNDRA:
-                    lineString1 += 'T.'
+                    lineString1 += "\x1b[38;5;10m" + 'T.' + "\x1b[0m"
                 elif mapLoc == mc.MARSH:
-                    lineString1 += 'M.'
+                    lineString1 += "\x1b[38;5;10m" + 'M.' + "\x1b[0m"
                 elif mapLoc == mc.SNOW:
-                    lineString1 += 'I.'
+                    lineString1 += "\x1b[38;5;10m" + 'I.' + "\x1b[0m"
+                elif mapLoc == mc.SAVANNAH:
+                    lineString1 += "\x1b[38;5;10m" + 'S.' + "\x1b[0m"
+                elif mapLoc == mc.LAKE:
+                    lineString1 += "\x1b[38;5;12m" + 'O.' + "\x1b[0m"
+                else:
+                    lineString1 += '##'
                 mapLoc = rm.riverMap[GetIndex(x,y)]
                 if mapLoc == rm.O:
-                    lineString2 += '..'
+                    lineString2 += "\x1b[38;5;10m" + '..' + "\x1b[0m"
                 elif mapLoc == rm.L:
-                    lineString2 += '.L'
+                    lineString2 += "\x1b[38;5;3m" + '.o' + "\x1b[0m"
                 elif mapLoc == rm.N:
-                    lineString2 += '.^'
+                    lineString2 += "\x1b[38;5;12m" + '.^' + "\x1b[0m"
                 elif mapLoc == rm.S:
-                    lineString2 += '.v'
+                    lineString2 += "\x1b[38;5;12m" + '.v' + "\x1b[0m"
                 elif mapLoc == rm.E:
-                    lineString2 += '.>'
+                    lineString2 += "\x1b[38;5;12m" + '.>' + "\x1b[0m"
                 elif mapLoc == rm.W:
-                    lineString2 += '.<'
+                    lineString2 += "\x1b[38;5;12m" + '.<' + "\x1b[0m"
+                elif mapLoc == rm.N2:
+                    lineString2 += "\x1b[38;5;11m" + '.^' + "\x1b[0m"
+                elif mapLoc == rm.S2:
+                    lineString2 += "\x1b[38;5;11m" + '.v' + "\x1b[0m"
+                elif mapLoc == rm.E2:
+                    lineString2 += "\x1b[38;5;11m" + '.>' + "\x1b[0m"
+                elif mapLoc == rm.W2:
+                    lineString2 += "\x1b[38;5;11m" + '.<' + "\x1b[0m"
+                else:
+                    lineString2 += '##'
 ##            lineString1 += "-" + wz.GetZoneName(wz.GetZone(y))
 ##            lineString2 += "-" + wz.GetZoneName(wz.GetZone(y))
             print lineString1
@@ -2965,204 +3543,7 @@ def getNumCustomMapOptions():
 	return len(mc.mapOptionNames)
 	# TAC - Map scripts - koma13 - END
 	
-def getCustomMapOptionName(argsList):
-        """
-        Returns name of specified option
-        argsList[0] is Option ID (int)
-        Return a Unicode string
-        """
-        optionID = argsList[0]
-        if mc.mapOptionNames[optionID] == "distance":
-            return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_DISTANCE", ())
-        # TAC - Map scripts - koma13 - START
-        elif mc.mapOptionNames[optionID] == "border north":
-			return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_NORTHERN_BORDER", ())
-        elif mc.mapOptionNames[optionID] == "border south":
-			return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_SOUTHERN_BORDER", ())
-        # TAC - Map scripts - koma13 - END
-        elif mc.mapOptionNames[optionID] == "land allocation":
-			return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_LAND_ALLOCATION", ())
-        elif mc.mapOptionNames[optionID] == "regularity":
-			return "Regularity"
-        elif mc.mapOptionNames[optionID] == "colony catchment radius":
-             return localText.getText("TXT_KEY_MAP_CUSTOM_OPTION_CITY_CATCHMENT_RADIUS", ())
-        return u""
-	
-def getNumCustomMapOptionValues(argsList):
-        """
-        Number of different choices for a particular setting
-        argsList[0] is Option ID (int)
-        Return an integer
-        """
-        optionID = argsList[0]
-        if mc.mapOptionNames[optionID] == "distance":
-            return 4
-        # TAC - Map scripts - koma13 - START
-        elif mc.mapOptionNames[optionID] == "border north":
-            return 13
-        elif mc.mapOptionNames[optionID] == "border south":
-            return 13
-        # TAC - Map scripts - koma13 - START
-        elif mc.mapOptionNames[optionID] == "land allocation":
-            return 2
-        elif mc.mapOptionNames[optionID] == "regularity":
-            return 3
-        elif mc.mapOptionNames[optionID] == "colony catchment radius":
-            return 2
-        
-        return 0
-	
-def getCustomMapOptionDescAt(argsList):
-    """
-    Returns name of value of option at specified row
-    argsList[0] is Option ID (int)
-    argsList[1] is Selection Value ID (int)
-    Return a Unicode string
-    """
-    optionID = argsList[0]
-    selectionID = argsList[1]
-    if mc.mapOptionNames[optionID] == "distance":
-        if selectionID == 0:
-            return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_3_FIELDS", ())
-        elif selectionID == 1:
-            return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_4_FIELDS", ())
-        elif selectionID == 2:
-            return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_6_FIELDS", ())
-        elif selectionID == 3:
-            return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_8_FIELDS", ())
-    
-    # TAC - Map scripts - koma13 - START
-    elif mc.mapOptionNames[optionID] == "border north":
-        if selectionID == 0:
-            return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_SELECT_NORTHERN_BORDER_0", ())
-        elif selectionID == 1:
-            return "75°N "
-        elif selectionID == 2:
-            return "60°N"
-        elif selectionID == 3:
-            return "45°N"
-        elif selectionID == 4:
-            return "30°N"
-        elif selectionID == 5:
-            return "15°N"
-        elif selectionID == 6:
-            return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_SELECT_EQUATOR", ())
-        elif selectionID == 7:
-            return "15°S"
-        elif selectionID == 8:
-            return "30°S"
-        elif selectionID == 9:
-            return "45°S"
-        elif selectionID == 10:
-            return "60°S"
-        elif selectionID == 11:
-            return "75°S"
-        elif selectionID == 12:
-            return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_SELECT_NORTHERN_BORDER_1", ())
-    
-    elif mc.mapOptionNames[optionID] == "border south":
-        if selectionID == 0:
-            return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_SELECT_SOUTHERN_BORDER_0", ())
-        elif selectionID == 1:
-            return "75°N "
-        elif selectionID == 2:
-            return "60°N"
-        elif selectionID == 3:
-            return "45°N"
-        elif selectionID == 4:
-            return "30°N"
-        elif selectionID == 5:
-            return "15°N"
-        elif selectionID == 6:
-            return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_SELECT_EQUATOR", ())
-        elif selectionID == 7:
-            return "15°S"
-        elif selectionID == 8:
-            return "30°S"
-        elif selectionID == 9:
-            return "45°S"
-        elif selectionID == 10:
-            return "60°S"
-        elif selectionID == 11:
-            return "75°S"
-        elif selectionID == 12:
-            return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_SELECT_SOUTHERN_BORDER_1", ())
-    # TAC - Map scripts - koma13 - END
 
-    elif mc.mapOptionNames[optionID] == "land allocation":
-        if selectionID == 0:
-            return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_MANY_ISLES_0", ())
-        elif selectionID == 1:
-            return localText.getText("TXT_KEY_MAP_FAIRE_WEATHER_MANY_ISLES_1", ())
-
-    elif mc.mapOptionNames[optionID] == "regularity":
-        if selectionID == 0:
-            return "Very Irregular"
-        elif selectionID == 1:
-            return "Quite Irregular (Default)"
-        elif selectionID == 2:
-            return "Regular"
-
-    elif mc.mapOptionNames[optionID] == "colony catchment radius":
-        if selectionID == 0:
-            return localText.getText("TXT_KEY_MAP_CUSTOM_OPTION_CITY_CATCHMENT_RADIUS_1_PLOT", ())
-        elif selectionID == 1:
-            return localText.getText("TXT_KEY_MAP_CUSTOM_OPTION_CITY_CATCHMENT_RADIUS_2_PLOT", ())
-
-    
-    return u""
-	
-def getCustomMapOptionDefault(argsList):
-    """
-    Returns default value of specified option
-    argsList[0] is Option ID (int)
-    Return an integer
-    """
-    optionID = argsList[0]
-    if mc.mapOptionNames[optionID] == "distance":
-        return 1
-    elif mc.mapOptionNames[optionID] == "border north":
-        return 0
-
-    elif mc.mapOptionNames[optionID] == "border south":
-        return 12
-
-    elif mc.mapOptionNames[optionID] == "land allocation":
-        return 0
-
-	
-    # TAC - Map scripts - koma13 - START
-    elif mc.mapOptionNames[optionID] == "regularity":
-        return 1
-    # TAC - Map scripts - koma13 - END
-
-    elif mc.mapOptionNames[optionID] == "colony catchment radius":
-        return CyGlobalContext().getDefaultCityCatchmentRadius()-1
-    return 0
-    
-def isRandomCustomMapOption(argsList):
-    """
-    Returns a flag indicating whether a random option should be provided
-    argsList[0] is Option ID (int)
-    Return a bool
-    """
-    optionID = argsList[0]
-    if mc.mapOptionNames[optionID] == "distance":
-        return False
-    # TAC - Map scripts - koma13 - START
-    elif mc.mapOptionNames[optionID] == "border north":
-        return True
-    elif mc.mapOptionNames[optionID] == "border south":
-        return True
-    # TAC - Map scripts - koma13 - END
-    elif mc.mapOptionNames[optionID] == "land allocation":
-        return True
-    elif mc.mapOptionNames[optionID] == "regularity":
-        return True
-    elif mc.mapOptionNames[optionID] == "colony catchment radius":
-        return False
-    
-    return False
     
 #This doesn't work with my river system so it is disabled. Some civs
 #might start without a river. Boo hoo.
@@ -3198,727 +3579,55 @@ def isSeaLevelMap():
 	"""
 	return 0
     
-def getTopLatitude():
-	"Default is 90. 75 is past the Arctic Circle"
-	# TAC - Map scripts - koma13 - START
-	#return 90
-	return mc.topLattitude
-	# TAC - Map scripts - koma13 - END
 
-def getBottomLatitude():
-	"Default is -90. -75 is past the Antartic Circle"
-	# TAC - Map scripts - koma13 - START
-	#return -90
-	return mc.bottomLattitude
-	# TAC - Map scripts - koma13 - END
-    
-def getGridSize(argsList):
-    "Colonization is different than Civ in this function. The numbers"
-    "here are the actual map size, not divided by 4 as in Civ"
-    mc.initialize()
-    mc.initInGameOptions()
-    grid_sizes = {
-            WorldSizeTypes.WORLDSIZE_TINY:		(15 + mc.distanceToEurope * 2,30),
-            WorldSizeTypes.WORLDSIZE_SMALL:		(20 + mc.distanceToEurope * 2,40),
-            WorldSizeTypes.WORLDSIZE_STANDARD:	(30 + mc.distanceToEurope * 2,60),
-            WorldSizeTypes.WORLDSIZE_LARGE:		(40 + mc.distanceToEurope * 2,80),
-            WorldSizeTypes.WORLDSIZE_HUGE:		(50 + mc.distanceToEurope * 2,100),
-			WorldSizeTypes.WORLDSIZE_GIGANTIC:	(100 + mc.distanceToEurope * 2,215)
-    }
-    if (argsList[0] == -1): # (-1,) is passed to function on loads
-            return []
-    [eWorldSize] = argsList
-    return grid_sizes[eWorldSize]
-
-def generatePlotTypes():
-    gc = CyGlobalContext()
-    mmap = gc.getMap()
-    mc.width = mmap.getGridWidth()
-    mc.height = mmap.getGridHeight()
-    PRand.seed()
-    hm.performTectonics()
-    hm.generateHeightMap()
-    hm.combineMaps()
-    hm.calculateSeaLevel()
-##    hm.printHeightMap()
-    hm.fillInLakes()
-    hm.addWaterBands()
-##    hm.printHeightMap()
-    cm.createClimateMaps()
-    sm.initialize()
-    rm.generateRiverMap()
-    plotTypes = [PlotTypes.PLOT_OCEAN] * (mc.width*mc.height)
-
-    for i in range(mc.width*mc.height):
-        mapLoc = sm.plotMap[i]
-        if mapLoc == mc.PEAK:
-            plotTypes[i] = PlotTypes.PLOT_PEAK
-        elif mapLoc == mc.HILLS:
-            plotTypes[i] = PlotTypes.PLOT_HILLS
-        elif mapLoc == mc.LAND:
-            plotTypes[i] = PlotTypes.PLOT_LAND
-        else:
-            plotTypes[i] = PlotTypes.PLOT_OCEAN
-    print "Finished generating plot types."         
-    return plotTypes
-def generateTerrainTypes():
-    NiTextOut("Generating Terrain  ...")
-    print "Adding Terrain"
-    gc = CyGlobalContext()
-    terrainDesert = gc.getInfoTypeForString("TERRAIN_DESERT")
-    terrainPlains = gc.getInfoTypeForString("TERRAIN_PLAINS")
-    terrainIce = gc.getInfoTypeForString("TERRAIN_SNOW")
-    terrainTundra = gc.getInfoTypeForString("TERRAIN_TUNDRA")
-    terrainGrass = gc.getInfoTypeForString("TERRAIN_GRASS")
-    terrainHill = gc.getInfoTypeForString("TERRAIN_HILL")
-    terrainCoast = gc.getInfoTypeForString("TERRAIN_COAST")
-    terrainOcean = gc.getInfoTypeForString("TERRAIN_OCEAN")
-    terrainPeak = gc.getInfoTypeForString("TERRAIN_PEAK")
-    terrainMarsh = gc.getInfoTypeForString("TERRAIN_MARSH")
-    #Androrc Savannah
-    terrainSavannah = gc.getInfoTypeForString("TERRAIN_SAVANNAH")
-    #Androrc End
-    # Belisarius - Large Rivers
-    terrainLargeRiver = gc.getInfoTypeForString("TERRAIN_LARGE_RIVERS")
-    
-    terrainTypes = [0]*(mc.width*mc.height)
-    for i in range(mc.width*mc.height):
-        if sm.terrainMap[i] == mc.OCEAN:
-            terrainTypes[i] = terrainOcean
-        elif sm.terrainMap[i] == mc.COAST:
-            terrainTypes[i] = terrainCoast
-        elif sm.terrainMap[i] == mc.DESERT:
-            terrainTypes[i] = terrainDesert
-        elif sm.terrainMap[i] == mc.PLAINS:
-            terrainTypes[i] = terrainPlains
-        elif sm.terrainMap[i] == mc.GRASS:
-            terrainTypes[i] = terrainGrass
-        #Androrc Savannah
-        elif sm.terrainMap[i] == mc.SAVANNAH:
-            terrainTypes[i] = terrainSavannah
-        #Androrc End
-        elif sm.terrainMap[i] == mc.TUNDRA:
-            terrainTypes[i] = terrainTundra
-        elif sm.terrainMap[i] == mc.SNOW:
-            terrainTypes[i] = terrainIce
-        elif sm.terrainMap[i] == mc.MARSH:
-            terrainTypes[i] = terrainMarsh
-    print "Finished generating terrain types."
-    return terrainTypes
-
-def addRivers():
-    NiTextOut("Adding Rivers....")
-    print "Adding Rivers"
-    gc = CyGlobalContext()
-    pmap = gc.getMap()
-    for y in range(mc.height):
-        for x in range(mc.width):
-            placeRiversInPlot(x,y)
-
-##    rm.printRiverAndTerrainAlign()
-            
-    #peaks and rivers don't always mix well graphically, so lets eliminate
-    #these potential glitches. Basically if there are adjacent peaks on both
-    #sides of a river, either in a cardinal direction or diagonally, they
-    #will look bad.
-    for y in range(mc.height):
-        for x in range(mc.width):
-            plot = pmap.plot(x,y)
-            if plot.isPeak() == True:
-                if plot.isNOfRiver() == True:
-                    for xx in range(x - 1,x + 2,1):
-                        yy = y - 1
-                        if yy < 0:
-                            break
-                        #wrap in x direction
-                        if xx == -1:
-                            xx = mc.width - 1
-                        elif xx == mc.width:
-                            xx = 0
-                        newPlot = pmap.plot(xx,yy)
-                        ii = GetIndex(xx,yy)
-                        if newPlot.isPeak():
-                            plot.setPlotType(PlotTypes.PLOT_HILLS,True,True)
-                            sm.plotMap[ii] = mc.HILLS
-                            break
-            #possibly changed so checked again
-            if plot.isPeak() == True:
-                if plot.isWOfRiver() == True:
-                    for yy in range(y - 1,y + 2,1):
-                        xx = x + 1
-                        if xx == mc.width:
-                            xx = 0
-                        #do not wrap in y direction
-                        if yy == -1:
-                            continue
-                        elif yy == mc.height:
-                            continue
-                        newPlot = pmap.plot(xx,yy)
-                        ii = GetIndex(xx,yy)
-                        if newPlot.isPeak():
-                            plot.setPlotType(PlotTypes.PLOT_HILLS,True,True)
-                            sm.plotMap[ii] = mc.HILLS
-                            break
-    
-def placeRiversInPlot(x,y):
-    gc = CyGlobalContext()
-    pmap = gc.getMap()
-    plot = pmap.plot(x,y)
-    #NE
-    xx,yy = rm.rxFromPlot(x,y,rm.NE)
-    ii = GetIndex(xx,yy)
-    if ii != -1:
-        if rm.riverMap[ii] == rm.S:
-            plot.setWOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_SOUTH)
-    #SW
-    xx,yy = rm.rxFromPlot(x,y,rm.SW)
-    ii = GetIndex(xx,yy)
-    if ii != -1:
-        if rm.riverMap[ii] == rm.E:
-            plot.setNOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_EAST)
-    #SE
-    xx,yy = rm.rxFromPlot(x,y,rm.SE)
-    ii = GetIndex(xx,yy)
-    if ii != -1:
-        if rm.riverMap[ii] == rm.N:
-            plot.setWOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_NORTH)
-        elif rm.riverMap[ii] == rm.W:
-            plot.setNOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_WEST)
-'''
-This function examines a lake area and removes ugly surrounding rivers. Any
-river that is flowing away from the lake, or alongside the lake will be
-removed. This function also returns a list of riverID's that flow into the
-lake.
-'''
-def cleanUpLake(x,y):
-    gc = CyGlobalContext()
-    mmap = gc.getMap()
-    riversIntoLake = list()
-    plot = mmap.plot(x,y+1)#North
-    if plot != 0 and plot.isNOfRiver() == True:
-        plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_SOUTH:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot = mmap.plot(x - 1,y)#West
-    if plot != 0 and plot.isWOfRiver() == True:
-        plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_EAST:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot = mmap.plot(x + 1,y)#East
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_WEST:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot = mmap.plot(x,y-1)#South
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_NORTH:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot = mmap.plot(x-1,y+1)#Northwest
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_SOUTH:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_EAST:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot = mmap.plot(x+1,y+1)#Northeast
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_WEST:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot = mmap.plot(x-1,y-1)#Southhwest
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_NORTH:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    #Southeast plot is not relevant 
-            
-    return riversIntoLake
-'''
-This function replaces rivers to update the river crossings after a lake or
-channel is placed at X,Y. There had been a long standing problem where water tiles
-added after a river were causing graphical glitches and incorrect river rules
-due to not updating the river crossings.
-'''
-def replaceRivers(x,y):
-    gc = CyGlobalContext()
-    mmap = gc.getMap()
-    plot = mmap.plot(x,y+1)#North
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_SOUTH:
-            #setting the river to what it already is will be ignored by the dll,
-            #so it must be unset and then set again.
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setWOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_SOUTH)
-    plot = mmap.plot(x - 1,y)#West
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_EAST:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setNOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_EAST)
-    plot = mmap.plot(x + 1,y)#East
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_WEST:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setNOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_WEST)
-    plot = mmap.plot(x,y-1)#South
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_NORTH:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setWOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_NORTH)
-    plot = mmap.plot(x-1,y+1)#Northwest
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_SOUTH:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setWOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_SOUTH)
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_EAST:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setNOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_EAST)
-    plot = mmap.plot(x+1,y+1)#Northeast
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_WEST:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setNOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_WEST)
-    plot = mmap.plot(x-1,y-1)#Southhwest
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_NORTH:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setWOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_NORTH)
-    #Southeast plot is not relevant 
-            
-    return
-
-'''
-It looks bad to have a lake, fed by a river, sitting right next to the coast.
-This function tries to minimize that occurance by replacing it with a
-natural harbor, which looks much better.
-'''
-def makeHarbor(x,y,oceanMap):
-    oceanID = oceanMap.getOceanID()
-    i = oceanMap.getIndex(x,y)
-    if oceanMap.areaMap[i] != oceanID:
-        return
-    #N
-    xx = x
-    yy = y + 2
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x,y + 1)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #S
-    xx = x
-    yy = y - 2
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x,y - 1)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #E
-    xx = x + 2
-    yy = y 
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x + 1,y)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #W
-    xx = x - 2
-    yy = y 
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x - 1,y)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #NW
-    xx = x - 1
-    yy = y + 1
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x - 1,y)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #NE
-    xx = x + 1
-    yy = y + 1
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x + 1,y)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #SW
-    xx = x - 1
-    yy = y - 1
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x ,y - 1)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #NW
-    xx = x - 1
-    yy = y + 1
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x,y + 1)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    return
-def makeChannel(x,y):
-    gc = CyGlobalContext()
-    mmap = gc.getMap()
-    terrainCoast = gc.getInfoTypeForString("TERRAIN_COAST")
-    plot = mmap.plot(x,y)
-    cleanUpLake(x,y)
-    plot.setTerrainType(terrainCoast,True,True)
-    plot.setRiverID(-1)
-    plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    replaceRivers(x,y)
-    i = GetIndex(x,y)
-    sm.plotMap[i] = mc.OCEAN
-    return
-def expandLake(x,y,riversIntoLake,oceanMap):
-    class LakePlot :
-        def __init__(self,x,y,altitude):
-            self.x = x
-            self.y = y
-            self.altitude = altitude
-    gc = CyGlobalContext()
-    mmap = gc.getMap()
-    terrainCoast = gc.getInfoTypeForString("TERRAIN_COAST")
-    lakePlots = list()
-    lakeNeighbors = list()
-    i = oceanMap.getIndex(x,y)
-    desertModifier = 1.0
-    if sm.terrainMap[i] == mc.DESERT:
-        desertModifier = mc.DesertLakeModifier
-    drainage = rm.drainageMap[i]
-    lakeSize = max(3,int(drainage * mc.LakeSizePerDrainage * desertModifier ))
-    start = LakePlot(x,y,sm.heightMap[i])
-    lakeNeighbors.append(start)
-#    print "lakeSize",lakeSize
-    while lakeSize > 0 and len(lakeNeighbors) > 0:
-#        lakeNeighbors.sort(key=operator.attrgetter('altitude'),reverse=False)
-        lakeNeighbors.sort(lambda x,y:cmp(x.altitude,y.altitude))
-        currentLakePlot = lakeNeighbors[0]
-        del lakeNeighbors[0]
-        lakePlots.append(currentLakePlot)
-        plot = mmap.plot(currentLakePlot.x,currentLakePlot.y)
-        #if you are erasing a river to make a lake, make the lake smaller
-        if plot.isNOfRiver() == True or plot.isWOfRiver() == True:
-            lakeSize -= 1
-        makeChannel(currentLakePlot.x,currentLakePlot.y)
-        #Add valid neighbors to lakeNeighbors
-        for n in range(4):
-            if n == 0:#N
-                xx = currentLakePlot.x
-                yy = currentLakePlot.y + 1
-                ii = oceanMap.getIndex(xx,yy)
-            elif n == 1:#S
-                xx = currentLakePlot.x
-                yy = currentLakePlot.y - 1
-                ii = oceanMap.getIndex(xx,yy)
-            elif n == 2:#E
-                xx = currentLakePlot.x + 1
-                yy = currentLakePlot.y
-                ii = oceanMap.getIndex(xx,yy)
-            elif n == 3:#W
-                xx = currentLakePlot.x - 1
-                yy = currentLakePlot.y 
-                ii = oceanMap.getIndex(xx,yy)
-            else:
-                raise ValueError, "too many cardinal directions"
-            if ii != -1:
-                #if this neighbor is in water area, then quit
-                areaID = oceanMap.areaMap[ii]
-                if areaID == 0:
-                    raise ValueError, "areaID = 0 while generating lakes. This is a bug"
-                for n in range(len(oceanMap.areaList)):
-                    if oceanMap.areaList[n].ID == areaID:
-                        if oceanMap.areaList[n].water == True:
-#                            print "lake touched waterID = %(id)3d with %(ls)3d squares unused" % {'id':areaID,'ls':lakeSize}
-#                            print "n = %(n)3d" % {"n":n}
-#                            print str(oceanMap.areaList[n])
-                            return
-                if rm.riverMap[ii] != rm.L and mmap.plot(xx,yy).isWater() == False:
-                    lakeNeighbors.append(LakePlot(xx,yy,sm.heightMap[ii]))
-        
-        lakeSize -= 1
-#    print "lake finished normally at %(x)2d,%(y)2d" % {"x":x,"y":y}
-    return
-            
-def addLakes():
-    print "Adding Lakes"
-    gc = CyGlobalContext()
-    mmap = gc.getMap()
-    terrainCoast = gc.getInfoTypeForString("TERRAIN_COAST")
-#    PrintFlowMap()
-    oceanMap = Areamap(mc.width,mc.height,True,True)
-    oceanMap.defineAreas(isSmallWaterMatch)
-##    oceanMap.PrintList(oceanMap.areaList)
-##    oceanMap.PrintAreaMap()
-    for y in range(mc.height):
-        for x in range(mc.width):
-            i = GetIndex(x,y)
-            if rm.flowMap[i] == rm.L:
-                riversIntoLake = cleanUpLake(x,y)
-                plot = mmap.plot(x,y)
-                if len(riversIntoLake) > 0:
-##                    plot.setRiverID(-1)
-##                    plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-##                    plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-##                    #plot.setPlotType(PlotTypes.PLOT_OCEAN,True,True) setTerrain handles this already
-##                    plot.setTerrainType(terrainCoast,True,True)
-                    expandLake(x,y,riversIntoLake,oceanMap)
-                else:
-                    #no lake here, but in that case there should be no rivers either
-                    plot.setRiverID(-1)
-                    plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-                    plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    oceanMap.defineAreas(isSmallWaterMatch)
-##    oceanMap.PrintList(oceanMap.areaList)
-##    oceanMap.PrintAreaMap()
-    for y in range(mc.height):
-        for x in range(mc.width):
-            i = GetIndex(x,y)
-            makeHarbor(x,y,oceanMap)
-    return
-        
-def addFeatures():
-    NiTextOut("Generating Features  ...")
-    print "Adding Features"
-    gc = CyGlobalContext()
-    mmap = gc.getMap()
-    featureIce = gc.getInfoTypeForString("FEATURE_ICE")
-    featureJungle = gc.getInfoTypeForString("FEATURE_JUNGLE")
-    featureForest = gc.getInfoTypeForString("FEATURE_FOREST") 
-    featureForestTundra = gc.getInfoTypeForString("FEATURE_FOREST_TUNDRA")
-    featureLightForest = gc.getInfoTypeForString("FEATURE_LIGHT_FOREST")
-    featureVulcano = gc.getInfoTypeForString("FEATURE_VOLCANO")
-    FORESTLEAFY = 0
-    FORESTEVERGREEN = 1
-    FORESTSNOWY = 2
-    #Ice must be created later because it is overwritten by the addEurope
-    #function that is not exposed to python.
-##    iceChance = 1.0
-##    for y in range(4):
-##        for x in range(mc.width):
-##            plot = mmap.plot(x,y)
-##            if plot != 0 and plot.isWater() == True and PRand.random() < iceChance:
-##                plot.setFeatureType(featureIce,0)
-##        iceChance *= .66
-##    iceChance = 1.0
-##    for y in range(mc.height - 1,mc.height - 5,-1):
-##        for x in range(mc.width):
-##            plot = mmap.plot(x,y)
-##            if plot != 0 and plot.isWater() == True and PRand.random() < iceChance:
-##                plot.setFeatureType(featureIce,0)
-##        iceChance *= .66
-    #Now plant forest or jungle
-##    PrintTempMap(tm,tm.tempMap)
-##    PrintRainMap(rm,rm.rainMap,False)
-    ## R&R, ray, corrected maps to generate Savannah plains
-    terrainSavannah = gc.getInfoTypeForString("TERRAIN_SAVANNAH")
-    for y in range(mc.height):
-        for x in range(mc.width):
-            i = GetIndex(x,y)
-            plot = mmap.plot(x,y)
-            #forest and jungle
-            if plot.isWater() == False and sm.terrainMap[i] != mc.DESERT and\
-            plot.isPeak() == False:
-                if sm.rainFallMap[i] > sm.plainsThreshold*1.5:#jungle
-                    if sm.averageTempMap[i] > mc.JungleTemp:
-                        if sm.terrainMap[i] == mc.PLAINS:
-                            plot.setFeatureType(featureForest,FORESTLEAFY)
-                        ## R&R, ray, corrected maps to generate Savannah plains
-						## agnat86, generates also unvegetated Savannah
-                        elif PRand.random() <= mc.chanceForTreelessSavannah:
-                            plot.setFeatureType(FeatureTypes.NO_FEATURE,0)
-                            if sm.terrainMap[i] == mc.GRASS:
-                                plot.setTerrainType(terrainSavannah,True,True)
-                        elif PRand.random() <= 0.6:
-                            plot.setFeatureType(featureJungle,0)
-                            if sm.terrainMap[i] == mc.GRASS:
-                                plot.setTerrainType(terrainSavannah,True,True)
-                        elif sm.terrainMap[i] == mc.MARSH:
-                            plot.setFeatureType(featureJungle,0)
-                        else:
-                           plot.setFeatureType(featureForest,FORESTLEAFY)
-                    elif sm.averageTempMap[i] > mc.ForestTemp:
-                        plot.setFeatureType(featureForest,FORESTLEAFY)
-                    elif sm.averageTempMap[i] > mc.TundraTemp:
-                        plot.setFeatureType(featureForest,FORESTEVERGREEN)
-                    elif sm.averageTempMap[i] > mc.SnowTemp:
-                        plot.setFeatureType(featureForestTundra,0)
-                elif sm.rainFallMap[i] > sm.desertThreshold:#forest
-                    if sm.rainFallMap[i] > PRand.random() * sm.plainsThreshold * 1.5:
-                        if sm.averageTempMap[i] > mc.ForestTemp:
-                           plot.setFeatureType(featureForest,FORESTLEAFY)
-                        elif sm.averageTempMap[i] > mc.TundraTemp:
-                            plot.setFeatureType(featureForest,FORESTEVERGREEN)
-                        elif sm.averageTempMap[i] > mc.SnowTemp * 0.8:
-                            plot.setFeatureType(featureForestTundra,0)
-
-            if plot.isPeak() == False and plot.isWater() == False:
-                if sm.terrainMap[i] == mc.PLAINS and PRand.random() < mc.chanceForLightForest:
-                    plot.setFeatureType(featureLightForest,0)
-                if sm.terrainMap[i] == mc.MARSH and PRand.random() < mc.chanceForTreelessMarsh:
-                    plot.setFeatureType(FeatureTypes.NO_FEATURE,0)
-# neue Terrain start
-                else:
-            	    if PRand.random() == 1:
-		        plot.setFeatureType(featureVulcano,0)
-# neue Terrain ende
-                
-    return
-
-def europeMatch(x,y):
-    i = GetIndex(x,y)
-    if em.europeMap[i] == 1:
-        return True
-    return False
-
-def afterGeneration():
-    gc = CyGlobalContext()
-    mmap = gc.getMap()
-    em.initialize()
-    
-    europeEast = gc.getInfoTypeForString("EUROPE_EAST")
-    europeWest = gc.getInfoTypeForString("EUROPE_WEST")
-    
-    for y in range(mc.height):
-        for x in range(mc.width):
-            i = GetIndex(x,y)
-            plot = mmap.plot(x,y)
-            plot.setEurope(-1)
-            if plot.isWater() == False:
-                continue
-            if x > mc.width/3 and x < 2 * mc.width/3:#dont penetrate past 1/3 of map
-                continue
-            if y < 4 or y > mc.height - 5:#make room for ice
-                continue
-            landFound = False
-            for yy in range(y - mc.distanceToEurope,y + mc.distanceToEurope + 1,1):
-                for xx in range(x - mc.distanceToEurope,x + mc.distanceToEurope + 1,1):
-                    ii = GetIndex(xx,yy)
-                    if ii == -1:
-                        continue
-                    newPlot = mmap.plot(xx,yy)
-                    if newPlot.isWater() == False:
-                        landFound = True
-            if landFound == False:
-                em.europeMap[i] = 1
-                
-    europeAreas = Areamap(mc.width,mc.height,False,False)
-    europeAreas.defineAreas(europeMatch)
-##    europeAreas.PrintAreaMap()
-##    print "east europe = %d" % (europeEast)
-##    print "west europe = %d" % (europeWest)
-    #find europe areas that touch the map east/west edges
-    x = 0
-    xx = mc.width - 1
-    europeAreaIdList = list()
-    for y in range(mc.height):
-        i = GetIndex(x,y)
-        ii = GetIndex(xx,y)
-        if em.europeMap[i] == 1:
-            areaID = europeAreas.areaMap[i]
-            AppendUnique(europeAreaIdList,areaID)
-        if em.europeMap[ii] == 1:
-            areaID = europeAreas.areaMap[ii]
-            AppendUnique(europeAreaIdList,areaID)
-
-    for y in range(mc.height):
-        for x in range(mc.width):
-            i = GetIndex(x,y)
-            plot = mmap.plot(x,y)
-            areaID = europeAreas.areaMap[i]
-            if IsInList(europeAreaIdList,areaID):
-                if x < mc.width/2:
-                    plot.setEurope(europeWest)
-                else:
-                    plot.setEurope(europeEast)
-        
-    createIce()
-    
-def createIce():
-    gc = CyGlobalContext()
-    mmap = gc.getMap()
-    featureIce = gc.getInfoTypeForString("FEATURE_ICE")
-    iceChance = 1.0 
-    # TAC - Map scripts - koma13 - START
-    #for y in range(4):
-    if abs(mc.bottomLattitude) == 90 and (mc.bottomLattitude != mc.topLattitude or mc.topLattitude < 0):
-       for y in range(4):
-            for x in range(mc.width):
-                plot = mmap.plot(x,y)
-                if plot != 0 and plot.isWater() == True and PRand.random() < iceChance:
-                    plot.setFeatureType(featureIce,0)
-            iceChance *= .66
-    iceChance = 1.0
-    #for y in range(mc.height - 1,mc.height - 5,-1):
-    if abs(mc.topLattitude) == 90 and (mc.topLattitude != mc.bottomLattitude or mc.topLattitude > 0):
-        for y in range(mc.height - 1,mc.height - 5,-1):
-            for x in range(mc.width):
-                plot = mmap.plot(x,y)
-                if plot != 0 and plot.isWater() == True and PRand.random() < iceChance:
-                    plot.setFeatureType(featureIce,0)
-            iceChance *= .66 
-    
     # TAC - Map scripts - koma13 - END
 
-##mc.initialize()
-##PRand.seed()
-##hm.performTectonics()
-##hm.generateHeightMap()
-##hm.combineMaps()
-##hm.calculateSeaLevel()
-##hm.printHeightMap()
-##hm.fillInLakes()
-##hm.addWaterBands()
-##hm.printHeightMap()
-##cm.createClimateMaps()
-##sm.initialize()
-##rm.generateRiverMap()
-##hm.printHeightMap()
-##sm.printHeightMap()
-##sm.printPlotMap()
-##sm.printTerrainMap()
-##rm.printFlowMap()
-##rm.printRiverMap()
-##rm.printRiverAndTerrainAlign()
+# mc.initialize()
+# PRand.seed()
+# hm.performTectonics()
+# hm.generateHeightMap()
+# hm.combineMaps()
+# hm.calculateSeaLevel()
+# hm.printHeightMap()
 
-##sm.printHeightMap()
-##cm.printTempMap(cm.summerTempsMap)
-##cm.printTempMap(cm.winterTempsMap)
-##cm.printTempMap(cm.averageTempMap)
+# hm.fillInLakes()
+# hm.addWaterBands()
+# hm.printHeightMap()
+
+# cm.createClimateMaps()
+# sm.initialize()
+# rm.generateRiverMap()
+# hm.printHeightMap()
+
+# sm.printHeightMap()
+# sm.printPlotMap()
+# sm.printTerrainMap()
+# rm.printFlowMap()
+# rm.printRiverMap()
+# rm.printRiverAndTerrainAlign()
+
+# sm.printHeightMap()
+# cm.printTempMap(cm.summerTempsMap)
+# cm.printTempMap(cm.winterTempsMap)
+# cm.printTempMap(cm.averageTempMap)
+
+
+mc.initialize()
+PRand.seed()
+hm.performTectonics()
+hm.generateHeightMap()
+hm.combineMaps()
+hm.calculateSeaLevel()
+
+hm.fillInLakes()
+hm.addWaterBands()
+
+cm.createClimateMaps()
+sm.initialize()
+rm.generateRiverMap()
+
+rm.printRiverMap()
+rm.printLakeMap()
+rm.printLakeIDMap()
+
+rm.printRiverAndTerrainAlign()
