@@ -374,7 +374,7 @@ class PythonRandom :
         # has 53 bits of precision, so I'm using a 53 bit integer to seed the map!
         seed() #Start with system time
         seedValue = randint(0,9007199254740991)
-        seed(seedValue) #(seedValue)#3194276705487258L
+        seed(4035323568990064L) #(seedValue)#3194276705487258L
         print "Random seed (Using Python rands) for this map is %(s)20d" % {"s":seedValue}
         self.seed = seedValue
             
@@ -2593,34 +2593,51 @@ class AreaPlot :
 #the map plots are ordered from 0,0 in the SOUTH west corner! NOT the northwest
 #corner! That means that Y increases as you go north.
 class RiverMap :
+    # flow directions 
+    N = 1
+    E = 2
+    S = 3
+    W = 4
+    N2 = 5 # large river
+    E2 = 6 # large river
+    S2 = 7 # large river
+    W2 = 8 # large river
+    N3 = 9 # lake exit special location / large river source location
+    E3 = 10# lake exit special location
+    S3 = 11# lake exit special location
+    W3 = 12# lake exit special location
+    L = 13 #also denotes a 'pit' or 'flat'
+    O = 14  #used for ocean or land without a river
+    
+    lakeExit     = -2
+    lakeToOcean  = -3
+    lakeSource   = 1
+    lakeSquare   = 2
+    lakeExitFrom = 4
+    
+    turnLeft  = 1
+    turnRight = 2
+    turn180   = 3
+    turnNone  = 4
+    
+    # flow coordinates; x and y so that y is pointing ahead and x to the right vs the flow direction
+    FC = {N:  [[1,0],[0,1]], S:  [[-1,0],[0,-1]], E:  [[0,-1],[1,0]], W:  [[0,1],[-1,0]],
+          N2: [[1,0],[0,1]], S2: [[-1,0],[0,-1]], E2: [[0,-1],[1,0]], W2: [[0,1],[-1,0]],
+          N3: [[1,0],[0,1]], S3: [[-1,0],[0,-1]], E3: [[0,-1],[1,0]], W3: [[0,1],[-1,0]],
+          L:  [[0,0],[0,0]], O:  [[0,0],[0,0]]}
+    
+    # flow origin difference from corner (river coordinates) into plot coordinates
+    # forward left is origin. Reduce the values given here to set the origin to 0,0
+    FO_R2P = {N:  [0,0], S:  [1,-1], E:  [1,0], W:  [0,-1],
+              N2: [0,0], S2: [1,-1], E2: [1,0], W2: [0,-1],
+              N3: [0,0], S3: [1,-1], E3: [1,0], W3: [0,-1],
+              L: [0,0], O: [0,0]}
+    
     def __init__(self):
         #To provide global access without allocating alot of resources for
         #nothing, object initializer must be empty
         return
     def generateRiverMap(self):
-        self.N = 1
-        self.S = 2
-        self.E = 3
-        self.W = 4
-        self.N2 = 5 # large river
-        self.S2 = 6 # large river
-        self.E2 = 7 # large river
-        self.W2 = 8 # large river
-        self.N3 = 9 # lake exit special location
-        self.S3 = 10# lake exit special location
-        self.E3 = 11# lake exit special location
-        self.W3 = 12# lake exit special location
-        self.L = 13 #also denotes a 'pit' or 'flat'
-        self.O = 14  #used for ocean or land without a river
-        
-        self.lakeExit     = -2
-        self.lakeToOcean  = -3
-        self.lakeSource   = 1
-        self.lakeSquare   = 2
-        self.lakeExitFrom = 4
-        
-        
-
         #averageHeightMap, flowMap, averageRainfallMap and drainageMap are offset from the other maps such that
         #each element coincides with a four tile intersection on the game map
         self.averageHeightMap = array('d')
@@ -2630,6 +2647,8 @@ class RiverMap :
         self.averageRainfallMap = array('d')
         self.drainageMap = array('d')
         self.riverMap = array('i')
+        self.riverPlotMap = array('i')
+        self.riverIDs = array('i')
         self.lakeMap = array('i')
         self.lakeIDs = array('i')
         self.drainageLakeIDs = array('i')
@@ -2645,8 +2664,10 @@ class RiverMap :
             self.averageRainfallMap.append(0.0)
             self.drainageMap.append(0.0)
             self.riverMap.append(self.O)
+            self.riverPlotMap.append(-1)
             self.lakeMap.append(-1)
             self.lakeIDs.append(-1)
+            self.riverIDs.append(-1)
             self.drainageLakeIDs.append(-1)
             
         #Get highest intersection neighbor
@@ -2667,6 +2688,8 @@ class RiverMap :
                 if sm.plotMap[i] != mc.OCEAN:
                     self.lakeMap[i] = 0
                     self.lakeIDs[i] = 0
+                    self.riverIDs[i] = 0
+                    self.riverPlotMap[i] = 0
                     self.drainageLakeIDs[i] = 0
         
         #create flowMap pass 1 (no lakes or large rivers pass)
@@ -2905,22 +2928,16 @@ class RiverMap :
                 while(flow != self.O):
                     iteration += 1
                     
-                    if(flow == self.N):
-                        yy += 1
-                    elif(flow == self.S):
-                        yy -= 1
-                    elif(flow == self.W):
-                        xx -= 1
-                    elif(flow == self.E):
-                        xx += 1
-                    if(flow == self.N3):
-                        yy += 1
-                    elif(flow == self.S3):
-                        yy -= 1
-                    elif(flow == self.W3):
-                        xx -= 1
-                    elif(flow == self.E3):
-                        xx += 1
+                    xx += self.FC[flow][1][0]
+                    yy += self.FC[flow][1][1]
+                    # if(flow == self.N):
+                    #     yy += 1
+                    # elif(flow == self.S):
+                    #     yy -= 1
+                    # elif(flow == self.W):
+                    #     xx -= 1
+                    # elif(flow == self.E):
+                    #     xx += 1
                     #wrap
                     if(xx < 0):
                         xx = mc.width - 1
@@ -2964,9 +2981,170 @@ class RiverMap :
                 self.riverMap[i] = self.flowMap3[i]
             else:
                 self.riverMap[i] = self.O
+                
+        # finding large river sources / counting large rivers
+        lrID = 1
+        self.largeRivers = {}
+        print "Locating large rivers"
+        for y in range(mc.height):
+            for x in range(mc.width):
+                i = GetIndex(x,y)
+                if self.riverMap[i] >= self.N2 and self.riverMap[i] <=self.W2:
+                    isSource = True
+                    cx = 1; cy = 0; ii=GetIndex(x+cx,y+cy)
+                    if self.riverMap[ii] == self.W2 or self.riverMap[ii] == self.W3:
+                        isSource = False
+                    cx = -1; cy = 0; ii=GetIndex(x+cx,y+cy)
+                    if self.riverMap[ii] == self.E2 or self.riverMap[ii] == self.E3:
+                        isSource = False
+                    cx = 0; cy = 1; ii=GetIndex(x+cx,y+cy)
+                    if self.riverMap[ii] == self.S2 or self.riverMap[ii] == self.S3:
+                        isSource = False
+                    cx = 0; cy = -1; ii=GetIndex(x+cx,y+cy)
+                    if self.riverMap[ii] == self.N2 or self.riverMap[ii] == self.N3:
+                        isSource = False
+                    if isSource:
+                        self.largeRivers[lrID] = self.LargeRiver(x,y,lrID)
+                        self.doRiverData(self.largeRivers[lrID])
+                        self.riverMap[i] = self.riverMap[i] + 4
+                        self.planLargeRiver(self.largeRivers[lrID])
+                        lrID += 1
 
         #at this point river should be in tolerance or close to it
         #riverMap is ready for use
+    class LargeRiver:
+        def __init__(self, sourceX,sourceY, ID):
+            self.sourceX = sourceX
+            self.sourceY = sourceY
+            self.ID = ID
+            
+            self.length = 0
+            self.lakeStart = False
+            self.lakeEnd = False
+            self.riverEnd = False
+            self.riverPlots = []
+            self.riverIs = set()
+    
+    def doRiverData(self, k):
+            if self.lakeMap[GetIndex(k.sourceX+1, k.sourceY)] > 0:
+                k.lakeStart = True
+            if self.lakeMap[GetIndex(k.sourceX+1, k.sourceY-1)] > 0:
+                k.lakeStart = True
+            if self.lakeMap[GetIndex(k.sourceX, k.sourceY-1)] > 0:
+                k.lakeStart = True
+            if self.lakeMap[GetIndex(k.sourceX, k.sourceY)] > 0:
+                k.lakeStart = True
+            
+            xx = k.sourceX
+            yy = k.sourceY
+            while True:
+                ii = GetIndex(xx, yy)
+                
+                riverStatus = self.riverIDs[ii]
+                if riverStatus > 0:
+                    if riverStatus == k.ID:
+                        print("Large river loop! Something went wrong. ")
+                    else:
+                        print("River %i joins river %i." % (k.ID, riverStatus))
+                    k.riverEnd = True
+                    break
+                
+                flowNow = self.riverMap[ii]
+                if flowNow >= self.N2 and flowNow <= self.W3:
+                    k.riverPlots.append((xx,yy))
+                    k.length += 1
+                    self.riverIDs[ii] = k.ID
+                else:
+                    break
+                
+                xx += self.FC[flowNow][1][0]
+                yy += self.FC[flowNow][1][1]
+                # if flowNow == self.N2 or flowNow == self.N3:
+                #     yy += 1
+                # if flowNow == self.S2 or flowNow == self.S3:
+                #     yy -= 1
+                # if flowNow == self.W2 or flowNow == self.W3:
+                #     xx -= 1
+                # if flowNow == self.E2 or flowNow == self.E3:
+                #     xx += 1
+            
+            if self.lakeMap[GetIndex(xx, yy)] > 0:
+                k.lakeEnd = True
+            if self.lakeMap[GetIndex(xx+1, yy)] > 0:
+                k.lakeEnd = True
+            if self.lakeMap[GetIndex(xx+1, yy-1)] > 0:
+                k.lakeEnd = True
+            if self.lakeMap[GetIndex(xx, yy-1)] > 0:
+                k.lakeEnd = True
+                
+    def planLargeRiver(self, k):
+        idx = 0
+        xy = k.riverPlots[idx]
+        flow = self.riverMap[GetIndex(xy[0], xy[1])]
+        side = None
+        if k.lakeStart:
+            cx = -self.FC[flow][1][0]
+            cy = -self.FC[flow][1][1]
+            
+            rx = self.FC[flow][0][0]
+            ry = self.FC[flow][0][1]
+            
+            ox = self.FO_R2P[flow][0]
+            oy = self.FO_R2P[flow][1]
+            
+            if self.lakeMap[GetIndex(xy[0]+cx+ox, xy[1]+cy+oy)] > 0:
+                side = 'L'
+                self.riverPlotMap[GetIndex(xy[0]+ox, xy[1]+oy)] = 1
+            elif self.lakeMap[GetIndex(xy[0]+cx+rx+ox, xy[1]+cy+ry+oy)] > 0:
+                side = 'R'
+                self.riverPlotMap[GetIndex(xy[0]+rx+ox, xy[1]+ry+oy)] = 1
+                
+            # if flow == self.N3:
+            #     if self.lakeMap[GetIndex(xy[0], xy[1]-1)] > 0:
+            #         side = 'L'
+            #         self.riverPlotMap[GetIndex(xy[0], xy[1])] = 1
+            #     if self.lakeMap[GetIndex(xy[0]+1, xy[1]-1)] > 0:
+            #         side = 'R'
+            #         self.riverPlotMap[GetIndex(xy[0]+1, xy[1])] = 1
+            # if flow == self.S3:
+            #     if self.lakeMap[GetIndex(xy[0], xy[1])] > 0:
+            #         side = 'R'
+            #         self.riverPlotMap[GetIndex(xy[0], xy[1]-1)] = 1
+            #     if self.lakeMap[GetIndex(xy[0]+1, xy[1])] > 0:
+            #         side = 'L'
+            #         self.riverPlotMap[GetIndex(xy[0]+1, xy[1]-1)] = 1
+            # if flow == self.E3:
+            #     if self.lakeMap[GetIndex(xy[0], xy[1]-1)] > 0:
+            #         side = 'R'
+            #         self.riverPlotMap[GetIndex(xy[0]+1, xy[1]-1)] = 1
+            #     if self.lakeMap[GetIndex(xy[0], xy[1])] > 0:
+            #         side = 'L'
+            #         self.riverPlotMap[GetIndex(xy[0]+1, xy[1])] = 1
+            # if flow == self.W3:
+            #     if self.lakeMap[GetIndex(xy[0]+1, xy[1])] > 0:
+            #         side = 'R'
+            #         self.riverPlotMap[GetIndex(xy[0], xy[1])] = 1
+            #     if self.lakeMap[GetIndex(xy[0]+1, xy[1]-1)] > 0:
+            #         side = 'L'
+            #         self.riverPlotMap[GetIndex(xy[0], xy[1]-1)] = 1
+        
+    
+    def riverTurn(self, first, second):
+        diff = second - first
+        if diff == 3:
+            diff -= 4
+        elif diff == -3:
+            diff+= 4
+        
+        if abs(diff)==2:
+            return self.turn180
+        elif diff == 1:
+            return self.turnRight
+        elif diff == -1:
+            return self.turnLeft
+        elif diff == 0:
+            return self.turnNone
+    
     class LakeRecord:
         def __init__(self, lakeIs, borderIs, borderXs, borderYs, borderHs, waterH, exitX, exitY, exitFromX, exitFromY, exitRiverX, exitRiverY, ID):
             self.lakeIs = lakeIs
@@ -3355,6 +3533,24 @@ class RiverMap :
         lineString = " "
         print lineString
         
+    def printRiverIDMap(self):
+        print "Lake ID Map"
+        wz = WindZones(mc.height,80,-80)
+        for y in range(mc.height - 1,-1,-1):
+            lineString = ""
+            for x in range(mc.width):
+                mapLoc = self.riverIDs[GetIndex(x,y)]
+                if mapLoc == -1:
+                    lineString += '.'
+                elif mapLoc == 0:
+                    lineString += ':'
+                else:
+                    lineString += "\x1b[38;5;14m" + chr(mapLoc + 48) + "\x1b[0m"
+            lineString += "-" + wz.GetZoneName(wz.GetZone(y))
+            print lineString
+        lineString = " "
+        print lineString
+        
     def printFlowMap(self, stage = 1):
         if stage == 2:
             flowData = self.flowMap2
@@ -3453,28 +3649,53 @@ class RiverMap :
             lineString2 = ""
             for x in range(mc.width):
                 mapLoc = sm.terrainMap[GetIndex(x,y)]
-                if mapLoc == mc.OCEAN:
-                    lineString1 += "\x1b[38;5;4m" + ',.' + "\x1b[0m"
-                elif mapLoc == mc.COAST:
-                    lineString1 += "\x1b[38;5;4m" + ',.' + "\x1b[0m"
-                elif mapLoc == mc.DESERT:
-                    lineString1 += "\x1b[38;5;10m" + 'D.' + "\x1b[0m"
-                elif mapLoc == mc.GRASS:
-                    lineString1 += "\x1b[38;5;10m" + 'R.' + "\x1b[0m"
-                elif mapLoc == mc.PLAINS:
-                    lineString1 += "\x1b[38;5;10m" + 'P.' + "\x1b[0m"
-                elif mapLoc == mc.TUNDRA:
-                    lineString1 += "\x1b[38;5;10m" + 'T.' + "\x1b[0m"
-                elif mapLoc == mc.MARSH:
-                    lineString1 += "\x1b[38;5;10m" + 'M.' + "\x1b[0m"
-                elif mapLoc == mc.SNOW:
-                    lineString1 += "\x1b[38;5;10m" + 'I.' + "\x1b[0m"
-                elif mapLoc == mc.SAVANNAH:
-                    lineString1 += "\x1b[38;5;10m" + 'S.' + "\x1b[0m"
-                elif mapLoc == mc.LAKE:
-                    lineString1 += "\x1b[38;5;12m" + 'O.' + "\x1b[0m"
+                toRiver = self.riverPlotMap[GetIndex(x,y)]
+                if not toRiver == 1:
+                    if mapLoc == mc.OCEAN:
+                        lineString1 += "\x1b[38;5;4m" + ',.' + "\x1b[0m"
+                    elif mapLoc == mc.COAST:
+                        lineString1 += "\x1b[38;5;4m" + ',.' + "\x1b[0m"
+                    elif mapLoc == mc.DESERT:
+                        lineString1 += "\x1b[38;5;10m" + 'D.' + "\x1b[0m"
+                    elif mapLoc == mc.GRASS:
+                        lineString1 += "\x1b[38;5;10m" + 'R.' + "\x1b[0m"
+                    elif mapLoc == mc.PLAINS:
+                        lineString1 += "\x1b[38;5;10m" + 'P.' + "\x1b[0m"
+                    elif mapLoc == mc.TUNDRA:
+                        lineString1 += "\x1b[38;5;10m" + 'T.' + "\x1b[0m"
+                    elif mapLoc == mc.MARSH:
+                        lineString1 += "\x1b[38;5;10m" + 'M.' + "\x1b[0m"
+                    elif mapLoc == mc.SNOW:
+                        lineString1 += "\x1b[38;5;10m" + 'I.' + "\x1b[0m"
+                    elif mapLoc == mc.SAVANNAH:
+                        lineString1 += "\x1b[38;5;10m" + 'S.' + "\x1b[0m"
+                    elif mapLoc == mc.LAKE:
+                        lineString1 += "\x1b[38;5;12m" + 'O.' + "\x1b[0m"
+                    else:
+                        lineString1 += '##'
                 else:
-                    lineString1 += '##'
+                    if mapLoc == mc.OCEAN:
+                        lineString1 += "\x1b[38;5;13m" + ',.' + "\x1b[0m"
+                    elif mapLoc == mc.COAST:
+                        lineString1 += "\x1b[38;5;13m" + ',.' + "\x1b[0m"
+                    elif mapLoc == mc.DESERT:
+                        lineString1 += "\x1b[38;5;13m" + 'D.' + "\x1b[0m"
+                    elif mapLoc == mc.GRASS:
+                        lineString1 += "\x1b[38;5;13m" + 'R.' + "\x1b[0m"
+                    elif mapLoc == mc.PLAINS:
+                        lineString1 += "\x1b[38;5;13m" + 'P.' + "\x1b[0m"
+                    elif mapLoc == mc.TUNDRA:
+                        lineString1 += "\x1b[38;5;13m" + 'T.' + "\x1b[0m"
+                    elif mapLoc == mc.MARSH:
+                        lineString1 += "\x1b[38;5;13m" + 'M.' + "\x1b[0m"
+                    elif mapLoc == mc.SNOW:
+                        lineString1 += "\x1b[38;5;13m" + 'I.' + "\x1b[0m"
+                    elif mapLoc == mc.SAVANNAH:
+                        lineString1 += "\x1b[38;5;13m" + 'S.' + "\x1b[0m"
+                    elif mapLoc == mc.LAKE:
+                        lineString1 += "\x1b[38;5;13m" + 'O.' + "\x1b[0m"
+                    else:
+                        lineString1 += '##'
                 mapLoc = rm.riverMap[GetIndex(x,y)]
                 if mapLoc == rm.O:
                     lineString2 += "\x1b[38;5;10m" + '..' + "\x1b[0m"
@@ -3496,6 +3717,14 @@ class RiverMap :
                     lineString2 += "\x1b[38;5;11m" + '.>' + "\x1b[0m"
                 elif mapLoc == rm.W2:
                     lineString2 += "\x1b[38;5;11m" + '.<' + "\x1b[0m"
+                elif mapLoc == rm.N3:
+                    lineString2 += "\x1b[38;5;9m" + '.^' + "\x1b[0m"
+                elif mapLoc == rm.S3:
+                    lineString2 += "\x1b[38;5;9m" + '.v' + "\x1b[0m"
+                elif mapLoc == rm.E3:
+                    lineString2 += "\x1b[38;5;9m" + '.>' + "\x1b[0m"
+                elif mapLoc == rm.W3:
+                    lineString2 += "\x1b[38;5;9m" + '.<' + "\x1b[0m"
                 else:
                     lineString2 += '##'
 ##            lineString1 += "-" + wz.GetZoneName(wz.GetZone(y))
