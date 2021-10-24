@@ -35,9 +35,15 @@
 ##
 ## 1.0 - Ta Daaa!
 
-#from CvPythonExtensions import *
-#import CvUtil
-#import CvMapGeneratorUtil 
+gameAccess = True
+try:
+    from CvPythonExtensions import *
+    import CvUtil
+    import CvMapGeneratorUtil 
+
+    localText = CyTranslator() #neu
+except Exception:
+    gameAccess = False
 
 from array import array
 from random import random,randint,seed
@@ -340,13 +346,9 @@ class MapConstants :
         return
     
     def initInGameOptions(self):
-        # set city catchment radius
-
-
         self.distanceToEurope = 6
         self.topLattitude = -90
         self.bottomLattitude = 90
-
 
         self.hmMaxGrain = 8
         self.hmNumberOfPlates = int(float(self.hmWidth * self.hmHeight) * 0.0030)
@@ -354,13 +356,8 @@ class MapConstants :
         self.landPercent = 0.28
         self.plateMapScale = 0.5
         self.hmNoiseLevel = 1.5
-        #Regularity
 
-        #self.plateGrowthChanceY = 0.22
-        
         self.plateGrowthChanceY = 0.33
-        
-        #self.plateGrowthChanceY = 0.55
         return
     
 mc = MapConstants()
