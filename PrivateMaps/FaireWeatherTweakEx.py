@@ -10,6 +10,14 @@
 ##############################################################################
 ## Version History
 ##
+## 1.1  - Large rivers added. Complete ocean drainage modeling instead of 
+## lakes functioning as sinkholes. Results in larger lakes and rich lake-river
+## -systems. Lake, drainage, and river algorithms almost completely rewritten.
+##
+## REFACTORED to run independently of the game in development mode. Additionally,
+## added color highlight to many map print commmands.
+## (by Belisarius / FlaviusBelisarius @ civFanatics)
+##
 ## 1.08 - Translation into English language added. XML defined in "CIV4GameText_TAC".
 ## 
 ## 1.07 - Exchanged order of lattitude and landform options to bypass the quickstart bug. (by koma13)
@@ -40,6 +48,9 @@ from random import random,randint,seed
 import math
 import sys
 import time
+
+# Belisarius
+from sets import Set
 
 # the script can be run without the game for development based on the following boolean switch
 gameAccess = True
@@ -470,7 +481,7 @@ class PythonRandom :
             seedValue = randint(0,9007199254740991)
             seed(seedValue)
             print "Random seed (Using Python rands) for this map is %(s)20d" % {"s":seedValue}
-            self.seed = seedValue
+            self.mapSeed = seedValue
             
 ##            seedValue = 5436076319370800
 ##            seed(seedValue)
@@ -2740,6 +2751,11 @@ class RiverMap :
     L = 13 #also denotes a 'pit' or 'flat'
     O = 14  #used for ocean or land without a river
     
+    NE = 21
+    NW = 22
+    SE = 23
+    SW = 24
+    
     # lake maps
     lakeExit     = 0
     lakeToOcean  = -3
@@ -3210,7 +3226,7 @@ class RiverMap :
             self.lakeEnd = False
             self.riverEnd = False
             self.riverPlots = []
-            self.riverIs = set()
+            self.riverIs = Set()
             self.side = None
     
     def doRiverData(self, k):
@@ -3284,8 +3300,8 @@ class RiverMap :
         # start side selection logic
         
         # checking left side blocks (river / lake / ocean)
-        blockL = set()
-        blockR = set()
+        blockL = Set()
+        blockR = Set()
         # pattern:
         #  b b
         #  L b
@@ -3510,8 +3526,8 @@ class RiverMap :
     
     class LakeRecord:
         def __init__(self, lakeIs, borderIs, borderXs, borderYs, borderHs, waterH, exitX, exitY, exitFromX, exitFromY, exitRiverX, exitRiverY, ID):
-            self.lakeIs = lakeIs
-            self.borderIs = borderIs
+            self.lakeIs = lakeIs     # a Set
+            self.borderIs = borderIs # a Set
             self.borderXs = borderXs
             self.borderYs = borderYs
             self.borderHs = borderHs
@@ -3651,7 +3667,9 @@ class RiverMap :
         print("")
         print("Starting lake filling at %i %i" % (x,y))
         i = GetIndex(x,y)
-        k = self.LakeRecord({i},{i},[x],[y],[sm.heightMap[i]],sm.heightMap[i],-1,-1,-1,-1,-1,-1,lakeID)
+        s1 = Set(); s1.add(i)
+        s2 = Set(); s2.add(i)
+        k = self.LakeRecord(s1,s2,[x],[y],[sm.heightMap[i]],sm.heightMap[i],-1,-1,-1,-1,-1,-1,lakeID)
         
         if not self.lakeIDs[i] == 0:
             print("Lake already under another lake")
@@ -4514,6 +4532,10 @@ def generateTerrainTypes():
             terrainTypes[i] = terrainIce
         elif sm.terrainMap[i] == mc.MARSH:
             terrainTypes[i] = terrainMarsh
+        elif sm.terrainMap[i] == mc.LARGE_RIVER:
+            terrainTypes[i] = terrainLargeRiver
+        elif sm.terrainMap[i] == mc.LAKE:
+            terrainTypes[i] = terrainIce
     print "Finished generating terrain types."
     return terrainTypes
 
@@ -4579,314 +4601,23 @@ def placeRiversInPlot(x,y):
     xx,yy = rm.rxFromPlot(x,y,rm.NE)
     ii = GetIndex(xx,yy)
     if ii != -1:
-        if rm.riverMap[ii] == rm.S:
+        if rm.riverMap2[ii] == rm.S:
             plot.setWOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_SOUTH)
     #SW
     xx,yy = rm.rxFromPlot(x,y,rm.SW)
     ii = GetIndex(xx,yy)
     if ii != -1:
-        if rm.riverMap[ii] == rm.E:
+        if rm.riverMap2[ii] == rm.E:
             plot.setNOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_EAST)
     #SE
     xx,yy = rm.rxFromPlot(x,y,rm.SE)
     ii = GetIndex(xx,yy)
     if ii != -1:
-        if rm.riverMap[ii] == rm.N:
+        if rm.riverMap2[ii] == rm.N:
             plot.setWOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_NORTH)
-        elif rm.riverMap[ii] == rm.W:
+        elif rm.riverMap2[ii] == rm.W:
             plot.setNOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_WEST)
-'''
-This function examines a lake area and removes ugly surrounding rivers. Any
-river that is flowing away from the lake, or alongside the lake will be
-removed. This function also returns a list of riverID's that flow into the
-lake.
-'''
-def cleanUpLake(x,y):
-    gc = CyGlobalContext()
-    mmap = gc.getMap()
-    riversIntoLake = list()
-    plot = mmap.plot(x,y+1)#North
-    if plot != 0 and plot.isNOfRiver() == True:
-        plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_SOUTH:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot = mmap.plot(x - 1,y)#West
-    if plot != 0 and plot.isWOfRiver() == True:
-        plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_EAST:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot = mmap.plot(x + 1,y)#East
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_WEST:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot = mmap.plot(x,y-1)#South
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_NORTH:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot = mmap.plot(x-1,y+1)#Northwest
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_SOUTH:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_EAST:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot = mmap.plot(x+1,y+1)#Northeast
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_WEST:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot = mmap.plot(x-1,y-1)#Southhwest
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_NORTH:
-            riversIntoLake.append(plot.getRiverID())
-        else:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    #Southeast plot is not relevant 
-            
-    return riversIntoLake
-'''
-This function replaces rivers to update the river crossings after a lake or
-channel is placed at X,Y. There had been a long standing problem where water tiles
-added after a river were causing graphical glitches and incorrect river rules
-due to not updating the river crossings.
-'''
-def replaceRivers(x,y):
-    gc = CyGlobalContext()
-    mmap = gc.getMap()
-    plot = mmap.plot(x,y+1)#North
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_SOUTH:
-            #setting the river to what it already is will be ignored by the dll,
-            #so it must be unset and then set again.
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setWOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_SOUTH)
-    plot = mmap.plot(x - 1,y)#West
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_EAST:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setNOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_EAST)
-    plot = mmap.plot(x + 1,y)#East
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_WEST:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setNOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_WEST)
-    plot = mmap.plot(x,y-1)#South
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_NORTH:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setWOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_NORTH)
-    plot = mmap.plot(x-1,y+1)#Northwest
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_SOUTH:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setWOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_SOUTH)
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_EAST:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setNOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_EAST)
-    plot = mmap.plot(x+1,y+1)#Northeast
-    if plot != 0 and plot.isNOfRiver() == True:
-        if plot.getRiverWEDirection() == CardinalDirectionTypes.CARDINALDIRECTION_WEST:
-            plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setNOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_WEST)
-    plot = mmap.plot(x-1,y-1)#Southhwest
-    if plot != 0 and plot.isWOfRiver() == True:
-        if plot.getRiverNSDirection() == CardinalDirectionTypes.CARDINALDIRECTION_NORTH:
-            plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-            plot.setWOfRiver(True,CardinalDirectionTypes.CARDINALDIRECTION_NORTH)
-    #Southeast plot is not relevant 
-            
-    return
 
-'''
-It looks bad to have a lake, fed by a river, sitting right next to the coast.
-This function tries to minimize that occurance by replacing it with a
-natural harbor, which looks much better.
-'''
-def makeHarbor(x,y,oceanMap):
-    oceanID = oceanMap.getOceanID()
-    i = oceanMap.getIndex(x,y)
-    if oceanMap.areaMap[i] != oceanID:
-        return
-    #N
-    xx = x
-    yy = y + 2
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x,y + 1)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #S
-    xx = x
-    yy = y - 2
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x,y - 1)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #E
-    xx = x + 2
-    yy = y 
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x + 1,y)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #W
-    xx = x - 2
-    yy = y 
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x - 1,y)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #NW
-    xx = x - 1
-    yy = y + 1
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x - 1,y)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #NE
-    xx = x + 1
-    yy = y + 1
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x + 1,y)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #SW
-    xx = x - 1
-    yy = y - 1
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x ,y - 1)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    #NW
-    xx = x - 1
-    yy = y + 1
-    ii = oceanMap.getIndex(xx,yy)
-    if ii > -1 and \
-    oceanMap.getAreaByID(oceanMap.areaMap[ii]).water == True and \
-    oceanMap.areaMap[ii] != oceanID:
-        makeChannel(x,y + 1)
-        oceanMap.defineAreas(isSmallWaterMatch)
-        oceanID = oceanMap.getOceanID()
-    return
-def makeChannel(x,y):
-    gc = CyGlobalContext()
-    mmap = gc.getMap()
-    terrainCoast = gc.getInfoTypeForString("TERRAIN_COAST")
-    plot = mmap.plot(x,y)
-    cleanUpLake(x,y)
-    plot.setTerrainType(terrainCoast,True,True)
-    plot.setRiverID(-1)
-    plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-    replaceRivers(x,y)
-    i = GetIndex(x,y)
-    sm.plotMap[i] = mc.OCEAN
-    return
-def expandLake(x,y,riversIntoLake,oceanMap):
-    class LakePlot :
-        def __init__(self,x,y,altitude):
-            self.x = x
-            self.y = y
-            self.altitude = altitude
-    gc = CyGlobalContext()
-    mmap = gc.getMap()
-    terrainCoast = gc.getInfoTypeForString("TERRAIN_COAST")
-    lakePlots = list()
-    lakeNeighbors = list()
-    i = oceanMap.getIndex(x,y)
-    desertModifier = 1.0
-    if sm.terrainMap[i] == mc.DESERT:
-        desertModifier = mc.DesertLakeModifier
-    drainage = rm.drainageMap[i]
-    lakeSize = max(3,int(drainage * mc.LakeSizePerDrainage * desertModifier ))
-    start = LakePlot(x,y,sm.heightMap[i])
-    lakeNeighbors.append(start)
-#    print "lakeSize",lakeSize
-    while lakeSize > 0 and len(lakeNeighbors) > 0:
-#        lakeNeighbors.sort(key=operator.attrgetter('altitude'),reverse=False)
-        lakeNeighbors.sort(lambda x,y:cmp(x.altitude,y.altitude))
-        currentLakePlot = lakeNeighbors[0]
-        del lakeNeighbors[0]
-        lakePlots.append(currentLakePlot)
-        plot = mmap.plot(currentLakePlot.x,currentLakePlot.y)
-        #if you are erasing a river to make a lake, make the lake smaller
-        if plot.isNOfRiver() == True or plot.isWOfRiver() == True:
-            lakeSize -= 1
-        makeChannel(currentLakePlot.x,currentLakePlot.y)
-        #Add valid neighbors to lakeNeighbors
-        for n in range(4):
-            if n == 0:#N
-                xx = currentLakePlot.x
-                yy = currentLakePlot.y + 1
-                ii = oceanMap.getIndex(xx,yy)
-            elif n == 1:#S
-                xx = currentLakePlot.x
-                yy = currentLakePlot.y - 1
-                ii = oceanMap.getIndex(xx,yy)
-            elif n == 2:#E
-                xx = currentLakePlot.x + 1
-                yy = currentLakePlot.y
-                ii = oceanMap.getIndex(xx,yy)
-            elif n == 3:#W
-                xx = currentLakePlot.x - 1
-                yy = currentLakePlot.y 
-                ii = oceanMap.getIndex(xx,yy)
-            else:
-                raise ValueError, "too many cardinal directions"
-            if ii != -1:
-                #if this neighbor is in water area, then quit
-                areaID = oceanMap.areaMap[ii]
-                if areaID == 0:
-                    raise ValueError, "areaID = 0 while generating lakes. This is a bug"
-                for n in range(len(oceanMap.areaList)):
-                    if oceanMap.areaList[n].ID == areaID:
-                        if oceanMap.areaList[n].water == True:
-#                            print "lake touched waterID = %(id)3d with %(ls)3d squares unused" % {'id':areaID,'ls':lakeSize}
-#                            print "n = %(n)3d" % {"n":n}
-#                            print str(oceanMap.areaList[n])
-                            return
-                if rm.riverMap[ii] != rm.L and mmap.plot(xx,yy).isWater() == False:
-                    lakeNeighbors.append(LakePlot(xx,yy,sm.heightMap[ii]))
-        
-        lakeSize -= 1
-#    print "lake finished normally at %(x)2d,%(y)2d" % {"x":x,"y":y}
-    return
             
 def addLakes():
     print "Adding Lakes"
@@ -4901,29 +4632,14 @@ def addLakes():
     for y in range(mc.height):
         for x in range(mc.width):
             i = GetIndex(x,y)
-            if rm.flowMap[i] == rm.L:
-                riversIntoLake = cleanUpLake(x,y)
+            if sm.terrainMap[GetIndex(x,y)] == mc.LAKE:
                 plot = mmap.plot(x,y)
-                if len(riversIntoLake) > 0:
-##                    plot.setRiverID(-1)
-##                    plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-##                    plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-##                    #plot.setPlotType(PlotTypes.PLOT_OCEAN,True,True) setTerrain handles this already
-##                    plot.setTerrainType(terrainCoast,True,True)
-                    expandLake(x,y,riversIntoLake,oceanMap)
-                else:
-                    #no lake here, but in that case there should be no rivers either
-                    plot.setRiverID(-1)
-                    plot.setNOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
-                    plot.setWOfRiver(False,CardinalDirectionTypes.NO_CARDINALDIRECTION)
+                plot.setTerrainType(terrainCoast,True,True)
+                
     oceanMap.defineAreas(isSmallWaterMatch)
 ##    oceanMap.PrintList(oceanMap.areaList)
 ##    oceanMap.PrintAreaMap()
-    for y in range(mc.height):
-        for x in range(mc.width):
-            i = GetIndex(x,y)
-            makeHarbor(x,y,oceanMap)
-    return
+
         
 def addFeatures():
     NiTextOut("Generating Features  ...")
@@ -5154,3 +4870,64 @@ if not gameAccess:
     rm.printLakeIDMap()
     
     rm.printRiverAndTerrainAlign()
+    
+    # mc = MapConstants()
+    # PRand = PythonRandom()
+    # hm = HeightMap()
+    # cm = ClimateMap
+    # rm = RiverMap
+    # sm = SmallMaps()
+    # em = EuropeMap()
+    
+    # mc.initialize()
+    # PRand.seed()
+    # hm.performTectonics()
+    # hm.generateHeightMap()
+    # hm.combineMaps()
+    # hm.calculateSeaLevel()
+    # hm.printHeightMap()
+    
+    # hm.fillInLakes()
+    # hm.addWaterBands()
+    # hm.printHeightMap()
+    
+    # cm.createClimateMaps()
+    # cm.printRainFallMap(False)
+    # sm.initialize()
+    # rm.generateRiverMap()
+    # hm.printHeightMap()
+    
+    # sm.printHeightMap()
+    # sm.printPlotMap()
+    # sm.printTerrainMap()
+    # rm.printFlowMap()
+    # rm.printRiverMap()
+    # rm.printRiverAndTerrainAlign()
+    # rm.printFlowAndLakesAlign(2)
+    # rm.printFlowAndLakesAlign(1)
+    # rm.printLakeMap()
+    # rm.printLakeIDMap()
+    
+    # sm.printHeightMap()
+    # cm.printTempMap(cm.summerTempsMap)
+    # cm.printTempMap(cm.winterTempsMap)
+    # cm.printTempMap(cm.averageTempMap)
+     
+    
+    # mc.initialize()
+    # PRand.seed()
+    # hm.performTectonics()
+    # hm.generateHeightMap()
+    # hm.combineMaps()
+    # hm.calculateSeaLevel()
+    
+    # hm.fillInLakes()
+    # hm.addWaterBands()
+    
+    # cm.createClimateMaps()
+    # sm.initialize()
+    # rm.generateRiverMap()
+    
+    # rm.printRiverMap()
+    
+    # rm.printLakeMap()
