@@ -10,6 +10,10 @@
 ##############################################################################
 ## Version History
 ##
+## 1.11 - High seas distance limit parameter added. Allows customizing
+## how far the high seas plots can at maximum extend from the map end.
+## (by Zycosi)
+## 
 ## 1.1  - Large rivers added. Complete ocean drainage modeling instead of 
 ## lakes functioning as sinkholes. Results in larger lakes and rich lake-river
 ## -systems. Lake, drainage, and river algorithms almost completely rewritten.
@@ -93,6 +97,9 @@ class MapConstants :
         #the entire coast. The distance is greater than the default so that
         #privateers can still be useful.
         self.distanceToEurope = 4
+        
+        #This controls how far into the map the travel zone (high seas) will penetrate
+        self.travelZoneSize = 0.125
         
         #How many map squares will be above peak threshold and thus 'peaks'.
         self.PeakPercent = 0.05
@@ -4750,7 +4757,8 @@ def afterGeneration():
             plot.setEurope(-1)
             if plot.isWater() == False:
                 continue
-            if x > mc.width/3 and x < 2 * mc.width/3:#dont penetrate past 1/3 of map
+            #limit travel zone to predefined region
+            if x > mc.width * (mc.travelZoneSize) and x < mc.width * (1 - mc.travelZoneSize):
                 continue
             if y < 4 or y > mc.height - 5:#make room for ice
                 continue
