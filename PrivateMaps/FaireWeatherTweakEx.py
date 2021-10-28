@@ -186,9 +186,9 @@ class MapConstants :
         
         #This value is used to decide if enough water has accumulated to form a river.
         #A lower value creates more rivers over the entire map.
-        self.RiverThreshold = 2.0
+        self.RiverThreshold = 7.0
         # Belisarius - Large Rivers
-        self.LargeRiverThreshold = 25.0
+        self.LargeRiverThreshold = 55.0
         
         #Degrees lattitude for the top and bottom of the map. This allows
         #for more specific climate zones
@@ -3078,7 +3078,7 @@ class RiverMap :
                         ii = GetIndex(xx,yy)
                         avg += sm.rainFallMap[ii]
                 avg = avg/4.0
-                self.averageRainfallMap[i] = avg
+                self.averageRainfallMap[i] = avg + 0.02 # encouraging longer rivers
                 
         # cleanup copy flowmap3
         for i in self.flowMap2:
@@ -3204,10 +3204,62 @@ class RiverMap :
         for i in range(mc.height*mc.width):
             self.riverMap2.append(self.riverMap[i])
         
+        # large river cleanup
+        for y in range(mc.height):
+            for x in range(mc.width):
+                # resolving 2x2 river blocks (delete extra one)
+                if (self.riverPlotMap[GetIndex(x,y)] == self.riverTrue and 
+                        self.riverPlotMap[GetIndex(x+1,y)] == self.riverTrue and 
+                        self.riverPlotMap[GetIndex(x+1,y+1)] == self.riverTrue and
+                        self.riverPlotMap[GetIndex(x,y+1)] == self.riverTrue):
+                    # bottomleft ("origin")
+                    if (self.riverPlotMap[GetIndex(x,y-1)] != self.riverTrue and 
+                            self.riverPlotMap[GetIndex(x-1,y)] != self.riverTrue):
+                        self.riverPlotMap[GetIndex(x,y)] = self.riverFalse
+                    # topleft
+                    elif (self.riverPlotMap[GetIndex(x-1,y+1)] != self.riverTrue and 
+                            self.riverPlotMap[GetIndex(x,y+2)] != self.riverTrue):
+                        self.riverPlotMap[GetIndex(x,y+1)] = self.riverFalse
+                    # topright
+                    elif (self.riverPlotMap[GetIndex(x+2,y+1)] != self.riverTrue and 
+                            self.riverPlotMap[GetIndex(x+1,y+2)] != self.riverTrue):
+                        self.riverPlotMap[GetIndex(x+1,y+1)] = self.riverFalse
+                    # bottomright
+                    elif (self.riverPlotMap[GetIndex(x+1,y-1)] != self.riverTrue and 
+                            self.riverPlotMap[GetIndex(x+2,y)] != self.riverTrue):
+                        self.riverPlotMap[GetIndex(x+1,y)] = self.riverFalse
+                
+                # resolving 2x2 river / lake mixed blocks (delete river)
+                if ((self.riverPlotMap[GetIndex(x,y)] == self.riverTrue or self.lakeMap[GetIndex(x,y)] > 0) and 
+                        (self.riverPlotMap[GetIndex(x+1,y)] == self.riverTrue or self.lakeMap[GetIndex(x+1,y)] > 0) and 
+                        (self.riverPlotMap[GetIndex(x+1,y+1)] == self.riverTrue or self.lakeMap[GetIndex(x+1,y+1)] > 0) and
+                        (self.riverPlotMap[GetIndex(x,y+1)] == self.riverTrue or self.lakeMap[GetIndex(x,y+1)] > 0)):
+                    # bottomleft ("origin")
+                    if (self.riverPlotMap[GetIndex(x,y)] == self.riverTrue and
+                            self.riverPlotMap[GetIndex(x,y-1)] != self.riverTrue and 
+                            self.riverPlotMap[GetIndex(x-1,y)] != self.riverTrue):
+                        self.riverPlotMap[GetIndex(x,y)] = self.riverFalse
+                    # topleft
+                    elif (self.riverPlotMap[GetIndex(x,y+1)] == self.riverTrue and
+                            self.riverPlotMap[GetIndex(x-1,y+1)] != self.riverTrue and 
+                            self.riverPlotMap[GetIndex(x,y+2)] != self.riverTrue):
+                        self.riverPlotMap[GetIndex(x,y+1)] = self.riverFalse
+                    # topright
+                    elif (self.riverPlotMap[GetIndex(x+1,y+1)] == self.riverTrue and
+                            self.riverPlotMap[GetIndex(x+2,y+1)] != self.riverTrue and 
+                            self.riverPlotMap[GetIndex(x+1,y+2)] != self.riverTrue):
+                        self.riverPlotMap[GetIndex(x+1,y+1)] = self.riverFalse
+                    # bottomright
+                    elif (self.riverPlotMap[GetIndex(x+1,y)] == self.riverTrue and
+                            self.riverPlotMap[GetIndex(x+1,y-1)] != self.riverTrue and 
+                            self.riverPlotMap[GetIndex(x+2,y)] != self.riverTrue):
+                        self.riverPlotMap[GetIndex(x+1,y)] = self.riverFalse
+        
         # Large rivers done. Placing the plots
         for i in range(mc.height*mc.width):
             if self.riverPlotMap[i] == self.riverTrue:
-                sm.terrainMap[i] = mc.LARGE_RIVER
+                #sm.terrainMap[i] = mc.LARGE_RIVER
+                pass
                 
         # removing bordering small rivers.
         for y in range(mc.height):
@@ -3217,9 +3269,6 @@ class RiverMap :
                         for xx in range(x,x-2,-1):
                             self.riverMap2[GetIndex(xx,yy)] = self.O
                 
-                
-        
-        
         #at this point river should be in tolerance or close to it
         #riverMap is ready for use
     class LargeRiver:
@@ -3386,9 +3435,61 @@ class RiverMap :
                 return True
             else:
                 return False
+            
+        def checkNarrowLake(xx,yy):
+            neighbors = 0
+            xt = xx+1; yt = yy
+            if (self.lakeMap[GetIndex(xt, yt)] > 0 and 
+                GetIndex(xt, yt) not in plannedRiverPlots):
+                neighbors += 1
+                xout = xt; yout = yt
+            xt = xx-1; yt = yy
+            if (self.lakeMap[GetIndex(xt, yt)] > 0 and 
+                GetIndex(xt, yt) not in plannedRiverPlots):
+                neighbors += 1
+                xout = xt; yout = yt
+            xt = xx; yt = yy+1
+            if (self.lakeMap[GetIndex(xt, yt)] > 0 and 
+                GetIndex(xt, yt) not in plannedRiverPlots):
+                neighbors += 1
+                xout = xt; yout = yt
+            xt = xx; yt = yy-1
+            if (self.lakeMap[GetIndex(xt, yt)] > 0 and 
+                GetIndex(xt, yt) not in plannedRiverPlots):
+                neighbors += 1
+                xout = xt; yout = yt
+                
+            if neighbors == 1:
+                return (True, xout, yout)
+            elif neighbors == 0:
+                return (True, -1, -1)
+            else:
+                return (False, -1, -1)
         
         k.side = side
         ready = False
+        
+        # reverse river run: transform narrow lakes into rivers upstream
+        if k.lakeStart:
+            if side == 'L':
+                xxr = xx-cx+ox
+                yyr = yy-cy+oy
+                
+            else:
+                xxr = xx-cx+ox+rx
+                yyr = yy-cy+oy+ry
+            
+            while True:
+                (ok, xnew, ynew) = checkNarrowLake(xxr, yyr)
+                if not ok:
+                    break
+                plannedRiverPlots.append(GetIndex(xxr, yyr))
+                xxr = xnew
+                yyr = ynew
+                
+                if xnew == -1:
+                    break
+        
         # print("starting river run")
         while True:
             # lookup
@@ -3461,16 +3562,6 @@ class RiverMap :
                     if checkForCollision(k, xx+rx+ox+cx, yy+ry+oy+cy, flow):
                         ready = True
                         break
-                
-                # # river hit the ocean mid-turn
-                # if side == 'L':
-                #     if self.lakeMap[GetIndex(xx+ox+cx*2, yy+oy+cy*2)] < 0:
-                #         ready = True
-                #         break
-                # if side == 'R':
-                #     if self.lakeMap[GetIndex(xx+rx+ox+cx*2, yy+ry+oy+cy*2)] < 0:
-                #         ready = True
-                #         break
                 
             idx += 1
             xx += cx
@@ -3598,71 +3689,75 @@ class RiverMap :
         #-- check the four flow corners around --
         # bottom right corner
         cx = 0; cy = 0
-        # south
-        if self.lakeMap[GetIndex(x+cx, y+cy-1)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy-1)] <= 0:
-            alts = [sm.heightMap[GetIndex(x+cx, y+cy-2)], # downstream
-                    sm.heightMap[GetIndex(x+cx, y+cy-1)], # river square
-                    sm.heightMap[GetIndex(x+cx, y+cy)]] # upstream
-            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
-                exits.append((x+cx, y+cy, self.S3))
-        # east
-        if self.lakeMap[GetIndex(x+cx+1, y+cy-1)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy)] <= 0:
-            alts = [sm.heightMap[GetIndex(x+cx+2, y+cy)], # downstream
-                    sm.heightMap[GetIndex(x+cx+1, y+cy)], # river square
-                    sm.heightMap[GetIndex(x+cx,   y+cy)]] # upstream
-            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
-                exits.append((x+cx, y+cy, self.E3))
+        if self.flowMap[GetIndex(x+cx, y+cy)] != self.O:
+            # south
+            if self.lakeMap[GetIndex(x+cx, y+cy-1)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy-1)] <= 0:
+                alts = [sm.heightMap[GetIndex(x+cx, y+cy-2)], # downstream
+                        sm.heightMap[GetIndex(x+cx, y+cy-1)], # river square
+                        sm.heightMap[GetIndex(x+cx, y+cy)]] # upstream
+                if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                    exits.append((x+cx, y+cy, self.S3))
+            # east
+            if self.lakeMap[GetIndex(x+cx+1, y+cy-1)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy)] <= 0:
+                alts = [sm.heightMap[GetIndex(x+cx+2, y+cy)], # downstream
+                        sm.heightMap[GetIndex(x+cx+1, y+cy)], # river square
+                        sm.heightMap[GetIndex(x+cx,   y+cy)]] # upstream
+                if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                    exits.append((x+cx, y+cy, self.E3))
         
         # bottom left corner
         cx = -1; cy = 0
-        # south
-        if self.lakeMap[GetIndex(x+cx, y+cy-1)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy-1)] <= 0:
-            alts = [sm.heightMap[GetIndex(x+cx, y+cy-2)], # downstream
-                    sm.heightMap[GetIndex(x+cx, y+cy-1)], # river square
-                    sm.heightMap[GetIndex(x+cx, y+cy)]] # upstream
-            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
-                exits.append((x+cx, y+cy, self.S3))
-        # west
-        if self.lakeMap[GetIndex(x+cx, y+cy)] <= 0 and self.lakeMap[GetIndex(x+cx, y+cy-1)] <= 0:
-            alts = [sm.heightMap[GetIndex(x+cx-1, y+cy)], # downstream
-                    sm.heightMap[GetIndex(x+cx,   y+cy)], # river square
-                    sm.heightMap[GetIndex(x+cx+1, y+cy)]] # upstream
-            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
-                exits.append((x+cx, y+cy, self.W3))
+        if self.flowMap[GetIndex(x+cx, y+cy)] != self.O:
+            # south
+            if self.lakeMap[GetIndex(x+cx, y+cy-1)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy-1)] <= 0:
+                alts = [sm.heightMap[GetIndex(x+cx, y+cy-2)], # downstream
+                        sm.heightMap[GetIndex(x+cx, y+cy-1)], # river square
+                        sm.heightMap[GetIndex(x+cx, y+cy)]] # upstream
+                if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                    exits.append((x+cx, y+cy, self.S3))
+            # west
+            if self.lakeMap[GetIndex(x+cx, y+cy)] <= 0 and self.lakeMap[GetIndex(x+cx, y+cy-1)] <= 0:
+                alts = [sm.heightMap[GetIndex(x+cx-1, y+cy)], # downstream
+                        sm.heightMap[GetIndex(x+cx,   y+cy)], # river square
+                        sm.heightMap[GetIndex(x+cx+1, y+cy)]] # upstream
+                if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                    exits.append((x+cx, y+cy, self.W3))
         
         # top left corner
         cx = -1; cy = 1
-        # west
-        if self.lakeMap[GetIndex(x+cx, y+cy)] <= 0 and self.lakeMap[GetIndex(x+cx, y+cy-1)] <= 0:
-            alts = [sm.heightMap[GetIndex(x+cx-1, y+cy)], # downstream
-                    sm.heightMap[GetIndex(x+cx,   y+cy)], # river square
-                    sm.heightMap[GetIndex(x+cx+1, y+cy)]] # upstream
-            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
-                exits.append((x+cx, y+cy, self.W3))
-        # north
-        if self.lakeMap[GetIndex(x+cx, y+cy)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy)] <= 0:
-            alts = [sm.heightMap[GetIndex(x+cx, y+cy+1)], # downstream
-                    sm.heightMap[GetIndex(x+cx, y+cy)], # river square
-                    sm.heightMap[GetIndex(x+cx, y+cy-1)]] # upstream
-            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
-                exits.append((x+cx, y+cy, self.N3))
+        if self.flowMap[GetIndex(x+cx, y+cy)] != self.O:
+            # west
+            if self.lakeMap[GetIndex(x+cx, y+cy)] <= 0 and self.lakeMap[GetIndex(x+cx, y+cy-1)] <= 0:
+                alts = [sm.heightMap[GetIndex(x+cx-1, y+cy)], # downstream
+                        sm.heightMap[GetIndex(x+cx,   y+cy)], # river square
+                        sm.heightMap[GetIndex(x+cx+1, y+cy)]] # upstream
+                if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                    exits.append((x+cx, y+cy, self.W3))
+            # north
+            if self.lakeMap[GetIndex(x+cx, y+cy)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy)] <= 0:
+                alts = [sm.heightMap[GetIndex(x+cx, y+cy+1)], # downstream
+                        sm.heightMap[GetIndex(x+cx, y+cy)], # river square
+                        sm.heightMap[GetIndex(x+cx, y+cy-1)]] # upstream
+                if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                    exits.append((x+cx, y+cy, self.N3))
         
         # top right corner
         cx = 0; cy = 1
-        # east
-        if self.lakeMap[GetIndex(x+cx+1, y+cy-1)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy)] <= 0:
-            alts = [sm.heightMap[GetIndex(x+cx+2, y+cy)], # downstream
-                    sm.heightMap[GetIndex(x+cx+1, y+cy)], # river square
-                    sm.heightMap[GetIndex(x+cx,   y+cy)]] # upstream
-            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
-                exits.append((x+cx, y+cy, self.E3))
-        # north
-        if self.lakeMap[GetIndex(x+cx, y+cy)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy)] <= 0:
-            alts = [sm.heightMap[GetIndex(x+cx, y+cy+1)], # downstream
-                    sm.heightMap[GetIndex(x+cx, y+cy)], # river square
-                    sm.heightMap[GetIndex(x+cx, y+cy-1)]] # upstream
-            if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
-                exits.append((x+cx, y+cy, self.N3))
+        if self.flowMap[GetIndex(x+cx, y+cy)] != self.O:
+            # east
+            if self.lakeMap[GetIndex(x+cx+1, y+cy-1)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy)] <= 0:
+                alts = [sm.heightMap[GetIndex(x+cx+2, y+cy)], # downstream
+                        sm.heightMap[GetIndex(x+cx+1, y+cy)], # river square
+                        sm.heightMap[GetIndex(x+cx,   y+cy)]] # upstream
+                if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                    exits.append((x+cx, y+cy, self.E3))
+            # north
+            if self.lakeMap[GetIndex(x+cx, y+cy)] <= 0 and self.lakeMap[GetIndex(x+cx+1, y+cy)] <= 0:
+                alts = [sm.heightMap[GetIndex(x+cx, y+cy+1)], # downstream
+                        sm.heightMap[GetIndex(x+cx, y+cy)], # river square
+                        sm.heightMap[GetIndex(x+cx, y+cy-1)]] # upstream
+                if alts[2]>alts[0] and alts[2]>=alts[1] and alts[1]>=alts[0]:
+                    exits.append((x+cx, y+cy, self.N3))
         if len(exits) > 0:
             print("Exit validated: %i found" % (len(exits)))
             return exits
@@ -4877,7 +4972,7 @@ if not gameAccess:
     rm.printLakeMap()
     rm.printLakeIDMap()
     
-    rm.printRiverAndTerrainAlign()
+    rm.printRiverAndTerrainAlign(1)
     
     # mc = MapConstants()
     # PRand = PythonRandom()
