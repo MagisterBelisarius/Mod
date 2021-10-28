@@ -1249,7 +1249,7 @@ void CvMap::updateWaterPlotTerrainTypes()
 	EnumMap<TerrainTypes, bool> em;
 	em.set(TERRAIN_COAST, true);
 	em.set(TERRAIN_OCEAN, true);
-	em.set(TERRAIN_LAKE, true);
+	//em.set(TERRAIN_LAKE, true);
 
 	PlotRegionMap regions(em);
 

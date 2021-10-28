@@ -1713,7 +1713,7 @@ class ClimateMap :
                     elif self.rainFallMap[i] < 0.00001:
                         lineString += 'X'
                     else:
-                        mapLoc = int(self.rainFallMap[i] * 10)
+                        mapLoc = int(self.rainFallMap[i] * 60)
                         lineString += chr(mapLoc + 48)
             z = wz.GetZone(y)
             dx,dy = wz.GetWindDirectionsInZone(z)
@@ -4623,7 +4623,7 @@ def addLakes():
     print "Adding Lakes"
     gc = CyGlobalContext()
     mmap = gc.getMap()
-    terrainCoast = gc.getInfoTypeForString("TERRAIN_COAST")
+    terrainLake = gc.getInfoTypeForString("TERRAIN_LAKE")
 #    PrintFlowMap()
     oceanMap = Areamap(mc.width,mc.height,True,True)
     oceanMap.defineAreas(isSmallWaterMatch)
@@ -4634,7 +4634,7 @@ def addLakes():
             i = GetIndex(x,y)
             if sm.terrainMap[GetIndex(x,y)] == mc.LAKE:
                 plot = mmap.plot(x,y)
-                plot.setTerrainType(terrainCoast,True,True)
+                plot.setTerrainType(terrainLake,True,True)
                 
     oceanMap.defineAreas(isSmallWaterMatch)
 ##    oceanMap.PrintList(oceanMap.areaList)
