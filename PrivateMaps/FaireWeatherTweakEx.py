@@ -3258,8 +3258,7 @@ class RiverMap :
         # Large rivers done. Placing the plots
         for i in range(mc.height*mc.width):
             if self.riverPlotMap[i] == self.riverTrue:
-                #sm.terrainMap[i] = mc.LARGE_RIVER
-                pass
+                sm.terrainMap[i] = mc.LARGE_RIVER
                 
         # removing bordering small rivers.
         for y in range(mc.height):
