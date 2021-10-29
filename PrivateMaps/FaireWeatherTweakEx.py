@@ -99,10 +99,11 @@ class MapConstants :
         self.distanceToEurope = 4
         
         #This controls how far into the map the travel zone (high seas) will penetrate
-        self.travelZoneSize = 0.125
+        self.travelZoneSize = 0.2
         
         #How many map squares will be above peak threshold and thus 'peaks'.
         self.PeakPercent = 0.05
+        self.volcanoProbability = 1.0/150.0
 
         #How many map squares will be above hill threshold and thus 'hills' unless
         #they are also above peak threshold in which case they will be 'peaks'.
@@ -189,6 +190,7 @@ class MapConstants :
         self.RiverThreshold = 7.0
         # Belisarius - Large Rivers
         self.LargeRiverThreshold = 55.0
+        self.riverFordProbability = 1.0/8.0
         
         #Degrees lattitude for the top and bottom of the map. This allows
         #for more specific climate zones
@@ -4752,7 +4754,9 @@ def addFeatures():
     featureForest = gc.getInfoTypeForString("FEATURE_FOREST") 
     featureForestTundra = gc.getInfoTypeForString("FEATURE_FOREST_TUNDRA")
     featureLightForest = gc.getInfoTypeForString("FEATURE_LIGHT_FOREST")
-    featureVulcano = gc.getInfoTypeForString("FEATURE_VOLCANO")
+    featureVolcano = gc.getInfoTypeForString("FEATURE_VOLCANO")
+    terrainSavannah = gc.getInfoTypeForString("TERRAIN_SAVANNAH")
+    featureRiverFord = gc.getInfoTypeForString("FEATURE_RIVER_FORD")
     FORESTLEAFY = 0
     FORESTEVERGREEN = 1
     FORESTSNOWY = 2
@@ -4776,56 +4780,58 @@ def addFeatures():
 ##    PrintTempMap(tm,tm.tempMap)
 ##    PrintRainMap(rm,rm.rainMap,False)
     ## R&R, ray, corrected maps to generate Savannah plains
-    terrainSavannah = gc.getInfoTypeForString("TERRAIN_SAVANNAH")
+    
     for y in range(mc.height):
         for x in range(mc.width):
             i = GetIndex(x,y)
             plot = mmap.plot(x,y)
+            if sm.terrainMap[i] == mc.LARGE_RIVER:
+                if PRand.random() < mc.riverFordProbability:
+                    plot.setFeatureType(featureRiverFord,0)
             #forest and jungle
-            if plot.isWater() == False and sm.terrainMap[i] != mc.DESERT and\
-            plot.isPeak() == False:
-                if sm.rainFallMap[i] > sm.plainsThreshold*1.5:#jungle
-                    if sm.averageTempMap[i] > mc.JungleTemp:
-                        if sm.terrainMap[i] == mc.PLAINS:
+            if (plot.isWater() == False and plot.isPeak() == False):
+                # non-peak land plot
+                if sm.terrainMap[i] != mc.DESERT:
+                    if sm.rainFallMap[i] > sm.plainsThreshold*1.5:#jungle
+                        if sm.averageTempMap[i] > mc.JungleTemp:
+                            if sm.terrainMap[i] == mc.PLAINS:
+                                plot.setFeatureType(featureForest,FORESTLEAFY)
+                            ## R&R, ray, corrected maps to generate Savannah plains
+                            ## agnat86, generates also unvegetated Savannah
+                            elif PRand.random() <= mc.chanceForTreelessSavannah:
+                                plot.setFeatureType(FeatureTypes.NO_FEATURE,0)
+                                if sm.terrainMap[i] == mc.GRASS:
+                                    plot.setTerrainType(terrainSavannah,True,True)
+                            elif PRand.random() <= 0.6:
+                                plot.setFeatureType(featureJungle,0)
+                                if sm.terrainMap[i] == mc.GRASS:
+                                    plot.setTerrainType(terrainSavannah,True,True)
+                            elif sm.terrainMap[i] == mc.MARSH:
+                                plot.setFeatureType(featureJungle,0)
+                            else:
+                               plot.setFeatureType(featureForest,FORESTLEAFY)
+                        elif sm.averageTempMap[i] > mc.ForestTemp:
                             plot.setFeatureType(featureForest,FORESTLEAFY)
-                        ## R&R, ray, corrected maps to generate Savannah plains
-## agnat86, generates also unvegetated Savannah
-                        elif PRand.random() <= mc.chanceForTreelessSavannah:
-                            plot.setFeatureType(FeatureTypes.NO_FEATURE,0)
-                            if sm.terrainMap[i] == mc.GRASS:
-                                plot.setTerrainType(terrainSavannah,True,True)
-                        elif PRand.random() <= 0.6:
-                            plot.setFeatureType(featureJungle,0)
-                            if sm.terrainMap[i] == mc.GRASS:
-                                plot.setTerrainType(terrainSavannah,True,True)
-                        elif sm.terrainMap[i] == mc.MARSH:
-                            plot.setFeatureType(featureJungle,0)
-                        else:
-                           plot.setFeatureType(featureForest,FORESTLEAFY)
-                    elif sm.averageTempMap[i] > mc.ForestTemp:
-                        plot.setFeatureType(featureForest,FORESTLEAFY)
-                    elif sm.averageTempMap[i] > mc.TundraTemp:
-                        plot.setFeatureType(featureForest,FORESTEVERGREEN)
-                    elif sm.averageTempMap[i] > mc.SnowTemp:
-                        plot.setFeatureType(featureForestTundra,0)
-                elif sm.rainFallMap[i] > sm.desertThreshold:#forest
-                    if sm.rainFallMap[i] > PRand.random() * sm.plainsThreshold * 1.5:
-                        if sm.averageTempMap[i] > mc.ForestTemp:
-                           plot.setFeatureType(featureForest,FORESTLEAFY)
                         elif sm.averageTempMap[i] > mc.TundraTemp:
                             plot.setFeatureType(featureForest,FORESTEVERGREEN)
-                        elif sm.averageTempMap[i] > mc.SnowTemp * 0.8:
+                        elif sm.averageTempMap[i] > mc.SnowTemp:
                             plot.setFeatureType(featureForestTundra,0)
-
-            if plot.isPeak() == False and plot.isWater() == False:
-                if sm.terrainMap[i] == mc.PLAINS and PRand.random() < mc.chanceForLightForest:
-                    plot.setFeatureType(featureLightForest,0)
-                if sm.terrainMap[i] == mc.MARSH and PRand.random() < mc.chanceForTreelessMarsh:
-                    plot.setFeatureType(FeatureTypes.NO_FEATURE,0)
+                    elif sm.rainFallMap[i] > sm.desertThreshold:#forest
+                        if sm.rainFallMap[i] > PRand.random() * sm.plainsThreshold * 1.5:
+                            if sm.averageTempMap[i] > mc.ForestTemp:
+                               plot.setFeatureType(featureForest,FORESTLEAFY)
+                            elif sm.averageTempMap[i] > mc.TundraTemp:
+                                plot.setFeatureType(featureForest,FORESTEVERGREEN)
+                            elif sm.averageTempMap[i] > mc.SnowTemp * 0.8:
+                                plot.setFeatureType(featureForestTundra,0)
+                    if sm.terrainMap[i] == mc.PLAINS and PRand.random() < mc.chanceForLightForest:
+                        plot.setFeatureType(featureLightForest,0)
+                    if sm.terrainMap[i] == mc.MARSH and PRand.random() < mc.chanceForTreelessMarsh:
+                        plot.setFeatureType(FeatureTypes.NO_FEATURE,0)
 # neue Terrain start
-                else:
-                    if PRand.random() == 1:
-                        plot.setFeatureType(featureVulcano,0)
+            if plot.isPeak():
+                if PRand.random() < mc.volcanoProbability:
+                    plot.setFeatureType(featureVolcano,0)
 # neue Terrain ende
                 
     return
@@ -4971,7 +4977,7 @@ if not gameAccess:
     rm.printLakeMap()
     rm.printLakeIDMap()
     
-    rm.printRiverAndTerrainAlign(1)
+    rm.printRiverAndTerrainAlign(2)
     
     # mc = MapConstants()
     # PRand = PythonRandom()
